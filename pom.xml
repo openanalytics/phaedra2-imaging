@@ -12,7 +12,19 @@
 	<artifactId>phaedra2-imaging</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
-	<properties>
-	</properties>
+	<repositories>
+		<repository>
+			<id>ome</id>
+			<url>https://artifacts.openmicroscopy.org/artifactory/ome.releases</url>
+		</repository>
+	</repositories>
+	
+	<dependencies>
+		<dependency>
+			<groupId>ome</groupId>
+			<artifactId>formats-gpl</artifactId>
+			<version>6.9.1</version>
+		</dependency>
+	</dependencies>
 
 </project>
