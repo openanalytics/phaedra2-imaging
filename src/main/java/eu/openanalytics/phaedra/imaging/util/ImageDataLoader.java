@@ -2,14 +2,19 @@ package eu.openanalytics.phaedra.imaging.util;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.util.FileCopyUtils;
 
 import eu.openanalytics.phaedra.imaging.ImageData;
 import loci.formats.CoreMetadata;
@@ -26,10 +31,23 @@ public class ImageDataLoader {
 		else return ImageDataUtils.toImageData(image);
 	}
 	
+	public static ImageData load(InputStream input) throws IOException {
+		BufferedImage image = ImageIO.read(input);
+		if (image == null) {
+			// BioFormats requires reading from a file, so copy the image data into a temp file.
+			Path path = Files.createTempFile("ph2-img-", ".bin");
+			FileCopyUtils.copy(input, new FileOutputStream(path.toString()));
+			ImageData data = loadWithBioFormats(path.toString());
+			Files.delete(path);
+			return data;
+		}
+		else return ImageDataUtils.toImageData(image);
+	}
+	
 	private static ImageData loadWithBioFormats(String path) throws IOException {
 		IFormatReader reader = null;
 		
-		// Shortcut for TIFF to avoid expensive reader initialization.
+		// Shortcut for TIFF to avoid initializing the whole reader registry.
 		String fileExt = FilenameUtils.getExtension(path);
 		String[] tiffExtensions = { "tif", "tiff", "flex" };
 		if (Arrays.stream(tiffExtensions).anyMatch(e -> e.equals(fileExt))) reader = new TiffReader();

@@ -6,11 +6,14 @@ import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.openjpeg.EncodingParameters;
 import org.openjpeg.ImagePixels;
 import org.openjpeg.JavaByteSource;
 import org.openjpeg.OpenJPEGDecoder;
+import org.openjpeg.OpenJPEGEncoder;
 
 import eu.openanalytics.phaedra.imaging.ImageData;
+import eu.openanalytics.phaedra.imaging.jp2k.CompressionConfig;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodec;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodestreamSource;
 import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
@@ -118,6 +121,27 @@ public class OpenJPEGCodec implements ICodec {
 		}
 	}
 	
+	@Override
+	public void compressCodeStream(CompressionConfig config, ImageData data, String outputFile) throws IOException {
+		ImagePixels image = new ImagePixels();
+		image.width = data.width;
+		image.height = data.height;
+		image.depth = data.depth;
+		image.pixels = data.pixels;
+
+		EncodingParameters parameters = parseFromConfig(config);
+		
+		// Reduce resolutionLevels if needed (image too small).
+		int size = Math.min(image.width, image.height);
+		if (parameters.tileSize != null) {
+			size = Math.min(parameters.tileSize[0], parameters.tileSize[1]);
+		}
+		while (size < (1<<parameters.resolutionLevels)) parameters.resolutionLevels--;
+		
+		OpenJPEGEncoder encoder = new OpenJPEGEncoder();
+		encoder.encode(image, outputFile, parameters);
+	}
+	
 	private ImageData decode(ICodestreamSource source, int[] fullSize, float scale, Rectangle region) {
 		int discardLevels = calculateDiscardLevels(fullSize, scale);
 		
@@ -170,5 +194,27 @@ public class OpenJPEGCodec implements ICodec {
 	private JavaByteSource asByteSource(ICodestreamSource source) {
 		if (source instanceof JavaByteSource) return (JavaByteSource) source;
 		else throw new RuntimeException("Unsupported OpenJPEG source type: " + source.getClass());
+	}
+	
+	private EncodingParameters parseFromConfig(CompressionConfig config) {
+		EncodingParameters parameters = new EncodingParameters();
+		parameters.progressionOrder = config.order;
+		parameters.resolutionLevels = config.resolutionLevels;
+
+		String[] precincts = config.precincts.split("\\},");
+		parameters.precincts = new int[precincts.length * 2];
+		for (int i = 0; i < precincts.length; i++) {
+			String[] values = precincts[i].split(",");
+			parameters.precincts[2*i] = Integer.parseInt(values[0].substring(1));
+			if (values[1].endsWith("}")) values[1] = values[1].substring(0, values[1].length()-1);
+			parameters.precincts[2*i + 1] = Integer.parseInt(values[1]);
+		}
+		
+		// OpenJPEG 2.3.0 has been optimized, no longer requires tiles for performant region decoding.
+		//parameters.tileSize = new int[] { 256, 256 };
+		
+		parameters.psnr = config.psnr;
+		
+		return parameters;
 	}
 }
