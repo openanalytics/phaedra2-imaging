@@ -24,7 +24,7 @@ public class CodecTest {
 	@Test
 	public void testDecodeFull() throws IOException {
 		try (ICodec codec = CodecFactory.createCodec()) {
-			ByteArraySource src = ByteArraySource.fromClassPath("sample.j2k");
+			ByteArraySource src = ByteArraySource.fromClassPath("samples/sample.j2k");
 			
 			long start = System.currentTimeMillis();
 			ImageData data = codec.renderImage(1.0f, src);
@@ -41,7 +41,7 @@ public class CodecTest {
 	@Test
 	public void testDecodeScaled() throws IOException {
 		try (ICodec codec = CodecFactory.createCodec()) {
-			ByteArraySource src = ByteArraySource.fromClassPath("sample.j2k");
+			ByteArraySource src = ByteArraySource.fromClassPath("samples/sample.j2k");
 			
 			long start = System.currentTimeMillis();
 			ImageData data = codec.renderImage(0.25f, src);
@@ -58,7 +58,7 @@ public class CodecTest {
 	@Test
 	public void testDecodeFixedSize() throws IOException {
 		try (ICodec codec = CodecFactory.createCodec()) {
-			ByteArraySource src = ByteArraySource.fromClassPath("sample.j2k");
+			ByteArraySource src = ByteArraySource.fromClassPath("samples/sample.j2k");
 			
 			long start = System.currentTimeMillis();
 			ImageData data = codec.renderImage(1000, 1000, src);
@@ -75,7 +75,7 @@ public class CodecTest {
 	@Test
 	public void testDecodeRegion() throws IOException {
 		try (ICodec codec = CodecFactory.createCodec()) {
-			ByteArraySource src = ByteArraySource.fromClassPath("sample.j2k");
+			ByteArraySource src = ByteArraySource.fromClassPath("samples/sample.j2k");
 			
 			long start = System.currentTimeMillis();
 			ImageData data = codec.renderImageRegion(1.0f, new Rectangle(10, 10, 10, 10), src);
@@ -92,7 +92,7 @@ public class CodecTest {
 	@Test
 	public void testEncode() throws IOException {
 		try (ICodec codec = CodecFactory.createCodec()) {
-			InputStream input = ByteArraySource.class.getClassLoader().getResourceAsStream("sample.jpg");
+			InputStream input = ByteArraySource.class.getClassLoader().getResourceAsStream("samples/sample.jpg");
 			ImageData data = ImageDataLoader.load(input);
 			data = ImageDataUtils.changeDepth(data, 8);
 			
@@ -120,4 +120,5 @@ public class CodecTest {
 			System.out.println(String.format("Encoded %d pixels in %d ms", data.pixels.length, duration));
 		}
 	}
+
 }

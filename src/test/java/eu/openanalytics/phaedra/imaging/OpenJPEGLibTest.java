@@ -21,7 +21,7 @@ public class OpenJPEGLibTest {
 	@Test
 	public void testDecode() throws IOException {
 		OpenJPEGDecoder decoder = new OpenJPEGDecoder();
-		ByteArraySource src = ByteArraySource.fromClassPath("sample.j2k");
+		ByteArraySource src = ByteArraySource.fromClassPath("samples/sample.j2k");
 
 		long start = System.currentTimeMillis();
 		int[] pixels = decoder.decode(src, 0).pixels;

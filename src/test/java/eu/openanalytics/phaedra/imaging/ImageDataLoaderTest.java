@@ -32,7 +32,7 @@ public class ImageDataLoaderTest {
 	
 	private void testRenderToFormat(String format) throws IOException {
 		try (ICodec codec = CodecFactory.createCodec()) {
-			ByteArraySource src = ByteArraySource.fromClassPath("sample.j2k");
+			ByteArraySource src = ByteArraySource.fromClassPath("samples/sample.j2k");
 			
 			long start = System.currentTimeMillis();
 			ImageData data = codec.renderImage(1.0f, src);
@@ -40,7 +40,6 @@ public class ImageDataLoaderTest {
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ImageDataLoader.write(data, format, bos);
 			byte[] bytes = bos.toByteArray();
-//			FileCopyUtils.copy(bytes, new File("output." + format));
 			long duration = System.currentTimeMillis() - start;
 			
 			assertNotNull(bytes);
@@ -52,17 +51,17 @@ public class ImageDataLoaderTest {
 	
 	@Test
 	public void testLoadFromJPG() throws IOException {
-		testLoadFromFormat("sample.jpg");
+		testLoadFromFormat("samples/sample.jpg");
 	}
 	
 	@Test
 	public void testLoadFromPNG() throws IOException {
-		testLoadFromFormat("sample.png");
+		testLoadFromFormat("samples/sample.png");
 	}
 	
 	@Test
 	public void testLoadFromTIF() throws IOException {
-		testLoadFromFormat("sample.tif");
+		testLoadFromFormat("samples/sample.tif");
 	}
 	
 	private void testLoadFromFormat(String path) throws IOException {
