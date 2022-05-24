@@ -182,11 +182,7 @@ public class OpenJPEGCodec implements ICodec {
 	}
 	
 	private ImageData createImageData(int w, int h, int depth) {
-		ImageData data = new ImageData();
-		data.width = w;
-		data.height = h;
-		data.depth = depth;
-		data.pixels = new int[w * h];
+		ImageData data = ImageDataUtils.initNew(w, h, depth);
 		Arrays.fill(data.pixels, bgColor);
 		return data;
 	}

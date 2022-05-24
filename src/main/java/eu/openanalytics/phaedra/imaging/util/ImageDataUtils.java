@@ -12,19 +12,25 @@ import eu.openanalytics.phaedra.imaging.ImageData;
 public class ImageDataUtils {
 
 	/**
+	 * Initialize a new ImageData object of the specified dimensions.
+	 */
+	public static ImageData initNew(int width, int height, int depth) {
+		ImageData image = new ImageData();
+		image.width = width;
+		image.height = height;
+		image.depth = depth;
+		image.pixels = new int[ width * height ];
+		return image;
+	}
+	
+	/**
 	 * Create an exact deep copy of an ImageData object.
 	 */
 	public static ImageData copy(ImageData image) {
-		ImageData copy = new ImageData();
-		copy.width = image.width;
-		copy.height = image.height;
-		copy.depth = image.depth;
-		
-		copy.pixels = new int[ image.width * image.height ];
+		ImageData copy = initNew(image.width, image.height, image.depth);
 		for (int i = 0; i< image.pixels.length; i++) {
 			copy.pixels[i] = image.pixels[i];
 		}
-		
 		return copy;
 	}
 	
@@ -168,12 +174,7 @@ public class ImageDataUtils {
 	 * Convert a BufferedImage to an ImageData object.
 	 */
 	public static ImageData toImageData(BufferedImage image) {
-		ImageData data = new ImageData();
-		data.width = image.getWidth();
-		data.height = image.getHeight();
-		data.pixels = new int[ data.width * data.height ];
-		data.depth = getBitDepth(image);
-
+		ImageData data = initNew(image.getWidth(), image.getHeight(), getBitDepth(image));
 		for (int x = 0; x < data.width; x++) {
 		    for (int y = 0; y < data.height; y++) {
 		    	int index = x + (y * data.width);
@@ -181,7 +182,6 @@ public class ImageDataUtils {
 		    	data.pixels[index] = toImageDataPixel(value, data.depth);
 		    }
 		}
-		
 		return data;
 	}
 	

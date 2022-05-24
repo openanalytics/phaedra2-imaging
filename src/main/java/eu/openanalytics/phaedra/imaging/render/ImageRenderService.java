@@ -29,6 +29,11 @@ public class ImageRenderService {
 		executor = Executors.newFixedThreadPool(10);
 	}
 	
+	public void close() {
+		if (codecPool != null) codecPool.close();
+		if (executor != null) executor.shutdownNow();
+	}
+	
 	public byte[] renderImage(ICodestreamSource[] sources, ImageRenderConfig cfg) throws IOException {
 		
 		Assert.notEmpty(sources, "At least one codestream source must be specified");

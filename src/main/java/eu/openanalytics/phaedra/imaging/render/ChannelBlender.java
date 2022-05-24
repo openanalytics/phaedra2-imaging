@@ -4,6 +4,7 @@ import org.springframework.util.Assert;
 
 import eu.openanalytics.phaedra.imaging.ImageData;
 import eu.openanalytics.phaedra.imaging.render.ImageRenderConfig.ChannelRenderConfig;
+import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
 
 public class ChannelBlender {
 
@@ -19,11 +20,7 @@ public class ChannelBlender {
 		Assert.notEmpty(channels, "At least one channel must be provided for blending");
 		
 		// Start with an opaque, black RGB image.
-		ImageData output = new ImageData();
-		output.width = channels[0].width;
-		output.height = channels[0].height;
-		output.depth = 24;
-		output.pixels = new int[output.width * output.height];
+		ImageData output = ImageDataUtils.initNew(channels[0].width, channels[0].height, 24);
 		
 		for (int i=0; i < channels.length; i++) {
 			if (channels[i].depth == 1) blendOverlay(channels[i], output, cfg.channelConfigs[i]);

@@ -40,14 +40,19 @@ public class ImageRenderServiceTest {
 			cfg.channelConfigs[i].rgb = 255 << (i*8);
 		}
 		
-		long start = System.currentTimeMillis();
-		ImageRenderService svc = new ImageRenderService();
-		long duration = System.currentTimeMillis() - start;
-		System.out.println(String.format("ImageRenderService initialized in %d ms", duration));
-		
-		start = System.currentTimeMillis();
-		byte[] rendered = svc.renderImage(sources, cfg);
-		duration = System.currentTimeMillis() - start;
-		System.out.println(String.format("Composite image (%d channels) rendered to %d bytes in %d ms", sources.length, rendered.length, duration));
+		ImageRenderService svc = null;
+		try {
+			long start = System.currentTimeMillis();
+			svc = new ImageRenderService();
+			long duration = System.currentTimeMillis() - start;
+			System.out.println(String.format("ImageRenderService initialized in %d ms", duration));
+			
+			start = System.currentTimeMillis();
+			byte[] rendered = svc.renderImage(sources, cfg);
+			duration = System.currentTimeMillis() - start;
+			System.out.println(String.format("Composite image (%d channels) rendered to %d bytes in %d ms", sources.length, rendered.length, duration));
+		} finally {
+			if (svc != null) svc.close();
+		}
 	}
 }

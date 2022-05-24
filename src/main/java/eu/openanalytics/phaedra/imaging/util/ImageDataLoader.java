@@ -57,11 +57,7 @@ public class ImageDataLoader {
 			reader.setGroupFiles(false);
 			reader.setId(path);
 			
-			ImageData data = new ImageData();
-			data.width = reader.getSizeX();
-			data.height = reader.getSizeY();
-			data.depth = reader.getBitsPerPixel();
-			data.pixels = new int[data.width * data.height];
+			ImageData data = ImageDataUtils.initNew(reader.getSizeX(), reader.getSizeY(), reader.getBitsPerPixel());
 			
 			boolean le = true; // Access endianness only if needed.
 			if (data.depth > 8) {
