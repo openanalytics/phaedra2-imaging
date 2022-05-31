@@ -2,8 +2,6 @@ package eu.openanalytics.phaedra.imaging.render;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -41,28 +39,36 @@ public class ImageRenderService {
 		Assert.notEmpty(cfg.channelConfigs, "Image render config must contain at least one channel config");
 		Assert.isTrue(sources.length == cfg.channelConfigs.length, "Number of codestream sources must match number of channel configs");
 		
+		//TODO Checking why this MT approach hangs or crashes on Linux
+		
 		// Submit each channel for rendering in parallel.
-		List<Future<ImageData>> dataFutures = new ArrayList<>();
-		for (int i = 0; i < sources.length; i++) {
-			ICodestreamSource source = sources[i];
-			Future<ImageData> dataFuture = useCodecAsync(codec -> {
-				if (cfg.region == null) {
-					return codec.renderImage(cfg.scale, source);
-				} else {
-					return codec.renderImageRegion(cfg.scale, cfg.region, source);	
-				}
-			});
-			dataFutures.add(dataFuture);
-		}
+//		List<Future<ImageData>> dataFutures = new ArrayList<>();
+//		for (int i = 0; i < sources.length; i++) {
+//			ICodestreamSource source = sources[i];
+//			Future<ImageData> dataFuture = useCodecAsync(codec -> {
+//				if (cfg.region == null) {
+//					return codec.renderImage(cfg.scale, source);
+//				} else {
+//					return codec.renderImageRegion(cfg.scale, cfg.region, source);	
+//				}
+//			});
+//			dataFutures.add(dataFuture);
+//		}
 		
 		// Collect all rendered channels.
-		ImageData[] datas = new ImageData[dataFutures.size()];
+//		ImageData[] datas = new ImageData[dataFutures.size()];
+//		for (int i = 0; i < datas.length; i++) {
+//			try {
+//				datas[i] = dataFutures.get(i).get();
+//			} catch (Exception e) {
+//				throw new IOException("Error rendering image", e);
+//			}
+//		}
+		
+		ImageData[] datas = new ImageData[sources.length];
 		for (int i = 0; i < datas.length; i++) {
-			try {
-				datas[i] = dataFutures.get(i).get();
-			} catch (Exception e) {
-				throw new IOException("Error rendering image", e);
-			}
+			ICodestreamSource source = sources[i];
+			datas[i] = useCodec(codec -> codec.renderImage(cfg.scale, source));
 		}
 		
 		// Blend channels into a single result image.
