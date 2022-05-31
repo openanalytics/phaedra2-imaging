@@ -24,8 +24,6 @@ public class CodecPool extends GenericObjectPool<ICodec> {
 	
 	private static GenericObjectPoolConfig<ICodec> getConfig() {
 		GenericObjectPoolConfig<ICodec> config = new GenericObjectPoolConfig<>();
-		//TODO OpenJPEG crashes when used concurrently. Find out why.
-		config.setMaxTotal(1);
 		config.setMinEvictableIdleTimeMillis(EVICTION_DELAY);
 		config.setTimeBetweenEvictionRunsMillis(EVICTION_RUN_INTERVAL);
 		return config;

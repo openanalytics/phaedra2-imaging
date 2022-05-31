@@ -12,15 +12,6 @@ import eu.openanalytics.phaedra.imaging.render.ImageRenderConfig.ChannelRenderCo
 import eu.openanalytics.phaedra.imaging.render.ImageRenderService;
 
 public class ImageRenderServiceTest {
-
-	public static void main(String[] args) {
-		try {
-			new ImageRenderServiceTest().testRender();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
 	
 	@Test
 	public void testRender() throws IOException {
@@ -36,7 +27,6 @@ public class ImageRenderServiceTest {
 		for (int i = 0; i < sources.length; i++) {
 			cfg.channelConfigs[i] = new ChannelRenderConfig();
 			cfg.channelConfigs[i].name = "Raw" + (i + 1);
-			cfg.channelConfigs[i].contrastMax = 5000;
 			cfg.channelConfigs[i].rgb = 255 << (i*8);
 		}
 		

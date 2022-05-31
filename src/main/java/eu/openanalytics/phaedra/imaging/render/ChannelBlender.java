@@ -38,7 +38,12 @@ public class ChannelBlender {
 			int destValue = target.pixels[i];
 			
 			// Apply contrast stretching and reduce to 8bit
-			int grayValue = (int) (applyContrastStretch(srcValue, config.contrastMin, config.contrastMax) * 255);
+			double contrastCeil = Math.pow(2, source.depth) - 1;
+			int[] contrast = new int[] {
+					(int) (config.contrastMin * contrastCeil),
+					(int) (config.contrastMax * contrastCeil)
+			};
+			int grayValue = (int) (applyContrastStretch(srcValue, contrast) * 255);
 
 			// Start from the configured color mask.
 			int maskR = (config.rgb & 0xFF0000) >> 16;
@@ -68,11 +73,11 @@ public class ChannelBlender {
 		}
 	}
 	
-	private double applyContrastStretch(int pixelValue, int contrastMin, int contrastMax) {
+	private double applyContrastStretch(int pixelValue, int[] contrast) {
 		// Clip value to [min,max]
-		int clippedValue = Math.max(Math.min(pixelValue, contrastMax), contrastMin);
+		int clippedValue = Math.max(Math.min(pixelValue, contrast[1]), contrast[0]);
 		// Scale withing contrast range
-		double stretchedFraction = (clippedValue - contrastMin) / (double) (contrastMax - contrastMin);
+		double stretchedFraction = (clippedValue - contrast[0]) / (double) (contrast[1] - contrast[0]);
 		return stretchedFraction;
 	}
 	

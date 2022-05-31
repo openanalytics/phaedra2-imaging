@@ -39,7 +39,8 @@ public class ImageRenderService {
 		Assert.notEmpty(cfg.channelConfigs, "Image render config must contain at least one channel config");
 		Assert.isTrue(sources.length == cfg.channelConfigs.length, "Number of codestream sources must match number of channel configs");
 		
-		//TODO Checking why this MT approach hangs or crashes on Linux
+		//TODO Checking why this MT approach hangs or crashes on Linux.
+		// Even when rendering a single source, it still hangs.
 		
 		// Submit each channel for rendering in parallel.
 //		List<Future<ImageData>> dataFutures = new ArrayList<>();
