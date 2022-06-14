@@ -90,14 +90,27 @@ public class CodecTest {
 	}
 	
 	@Test
-	public void testEncode() throws IOException {
+	public void testEncode8bit() throws IOException {
+		InputStream input = ByteArraySource.class.getClassLoader().getResourceAsStream("samples/sample.tif");
+		ImageData data = ImageDataLoader.load(input, "tif");
+		data = ImageDataUtils.changeDepth(data, 8);
+		CompressionConfig config = new CompressionConfig();
+		testEncode(data, config);
+	}
+
+	@Test
+	public void testEncode1bit() throws IOException {
+		InputStream input = ByteArraySource.class.getClassLoader().getResourceAsStream("samples/sample.tif");
+		ImageData data = ImageDataLoader.load(input, "tif");
+		data = ImageDataUtils.changeDepth(data, 1);
+		CompressionConfig config = new CompressionConfig();
+		config.reversible = true;
+		testEncode(data, config);
+	}
+	
+	private void testEncode(ImageData data, CompressionConfig config) throws IOException {
 		try (ICodec codec = CodecFactory.createCodec()) {
-			InputStream input = ByteArraySource.class.getClassLoader().getResourceAsStream("samples/sample.jpg");
-			ImageData data = ImageDataLoader.load(input);
-			data = ImageDataUtils.changeDepth(data, 8);
-			
 			String destination = Files.createTempFile("ph2-tmp-", ".jp2k").toString();
-			CompressionConfig config = new CompressionConfig();
 			
 			long start = System.currentTimeMillis();
 			codec.compressCodeStream(config, data, destination);
@@ -106,7 +119,7 @@ public class CodecTest {
 			File destinationFile = new File(destination);
 			byte[] encoded = FileCopyUtils.copyToByteArray(destinationFile);
 			destinationFile.delete();
-
+	
 			assertNotNull(encoded);
 			assertTrue(encoded.length > 0);
 			
@@ -115,10 +128,9 @@ public class CodecTest {
 			assertEquals(data.width, dataAfterDecode.width);
 			assertEquals(data.height, dataAfterDecode.height);
 			
-//			ImageDataLoader.write(dataAfterDecode, "jpg", new FileOutputStream(Files.createTempFile("ph2-tmp-", ".jpg").toString()));
+	//		ImageDataLoader.write(dataAfterDecode, "jpg", new FileOutputStream(Files.createTempFile("ph2-tmp-", ".jpg").toString()));
 			
 			System.out.println(String.format("Encoded %d pixels in %d ms", data.pixels.length, duration));
 		}
 	}
-
 }

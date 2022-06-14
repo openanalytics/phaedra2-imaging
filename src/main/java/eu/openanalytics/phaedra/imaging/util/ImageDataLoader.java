@@ -1,6 +1,7 @@
 package eu.openanalytics.phaedra.imaging.util;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,11 +33,22 @@ public class ImageDataLoader {
 	}
 	
 	public static ImageData load(InputStream input) throws IOException {
-		BufferedImage image = ImageIO.read(input);
+		return load(input, null);
+	}
+	
+	public static ImageData load(InputStream input, String extension) throws IOException {
+		BufferedInputStream bufferedInput = new BufferedInputStream(input);
+		bufferedInput.mark(Integer.MAX_VALUE);
+		
+		BufferedImage image = ImageIO.read(bufferedInput);
 		if (image == null) {
 			// BioFormats requires reading from a file, so copy the image data into a temp file.
-			Path path = Files.createTempFile("ph2-img-", ".bin");
-			FileCopyUtils.copy(input, new FileOutputStream(path.toString()));
+			if (extension == null) extension = "bin";
+			Path path = Files.createTempFile("ph2-img-", "." + extension);
+			
+			bufferedInput.reset();
+			FileCopyUtils.copy(bufferedInput, new FileOutputStream(path.toString()));
+			
 			ImageData data = loadWithBioFormats(path.toString());
 			Files.delete(path);
 			return data;
