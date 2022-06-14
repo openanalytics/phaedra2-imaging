@@ -130,6 +130,7 @@ public class OpenJPEGCodec implements ICodec {
 		image.pixels = data.pixels;
 
 		EncodingParameters parameters = parseFromConfig(config);
+		System.out.println("Encoding with " + paramsToString(parameters));
 		
 		// Reduce resolutionLevels if needed (image too small).
 		int size = Math.min(image.width, image.height);
@@ -209,8 +210,14 @@ public class OpenJPEGCodec implements ICodec {
 		// OpenJPEG 2.3.0 has been optimized, no longer requires tiles for performant region decoding.
 		//parameters.tileSize = new int[] { 256, 256 };
 		
-		parameters.psnr = config.psnr;
+		// Compression will be reversible if both psnr and compressionFactor are set to 0;
+		parameters.psnr = config.reversible ? 0 : config.psnr;	
 		
 		return parameters;
+	}
+	
+	private String paramsToString(EncodingParameters params) {
+		return String.format("EncodingParameters { resLevels: %d, order: %s, psnr: %d, compFactor: %d, precincts: %d }",
+				params.resolutionLevels, params.progressionOrder, params.psnr, params.compressionFactor, params.precincts.length);
 	}
 }
