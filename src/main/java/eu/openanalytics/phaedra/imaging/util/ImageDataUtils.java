@@ -34,6 +34,31 @@ public class ImageDataUtils {
 		return copy;
 	}
 	
+	public static int[] createGammaLUT(float gamma) {
+		gamma = 1f / gamma;
+		int[] gammaLUT = new int[256];
+		for (int i=0; i<gammaLUT.length; i++) {
+			gammaLUT[i] = (int) (255 * (Math.pow((double) i / (double) 255, gamma)));
+		}
+		return gammaLUT;
+	}
+	
+	public static void applyGammaLUT(ImageData image, int[] gammaLUT) {
+		for (int i = 0; i< image.pixels.length; i++) {
+			int pixel = image.pixels[i];
+			int red = (pixel & 0xFF0000) >> 16;
+			int green = (pixel & 0x00FF00) >> 8;
+			int blue = (pixel & 0x0000FF);
+			image.pixels[i] = (gammaLUT[red] << 16) + (gammaLUT[green] << 8) + gammaLUT[blue];
+		}
+	}
+	
+	public static void applyGamma(ImageData image, float gamma) {
+		if (gamma == 1.0f) return;
+		int[] lut = createGammaLUT(gamma);
+		applyGammaLUT(image, lut);
+	}
+	
 	/**
 	 * Create a copy of an ImageData object with a different bit depth.
 	 * See the docs of {@link ImageData} for details on pixel encoding.

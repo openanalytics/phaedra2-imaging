@@ -12,6 +12,7 @@ import eu.openanalytics.phaedra.imaging.ImageData;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodec;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodestreamSource;
 import eu.openanalytics.phaedra.imaging.util.ImageDataLoader;
+import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
 
 /**
  * A service for rendering composite images, where each image channel
@@ -69,11 +70,17 @@ public class ImageRenderService {
 		ImageData[] datas = new ImageData[sources.length];
 		for (int i = 0; i < datas.length; i++) {
 			ICodestreamSource source = sources[i];
-			datas[i] = useCodec(codec -> codec.renderImage(cfg.scale, source));
+			if (cfg.region == null) {
+				datas[i] = useCodec(codec -> codec.renderImage(cfg.scale, source));				
+			} else {
+				datas[i] = useCodec(codec -> codec.renderImageRegion(cfg.scale, cfg.region, source));
+			}
 		}
 		
 		// Blend channels into a single result image.
 		ImageData resultImage = new ChannelBlender().blend(datas, cfg);
+		
+		ImageDataUtils.applyGamma(resultImage, cfg.gamma);
 		
 		// Convert the result image to the desired image format.
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
