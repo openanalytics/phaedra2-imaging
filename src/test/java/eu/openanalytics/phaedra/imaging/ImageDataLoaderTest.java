@@ -15,7 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.util.FileCopyUtils;
 
 import eu.openanalytics.phaedra.imaging.jp2k.ICodec;
+import eu.openanalytics.phaedra.imaging.jp2k.ICodestreamSource;
 import eu.openanalytics.phaedra.imaging.jp2k.openjpeg.source.ByteArraySource;
+import eu.openanalytics.phaedra.imaging.jp2k.source.ClassPathSourceDescriptor;
 import eu.openanalytics.phaedra.imaging.util.ImageDataLoader;
 
 public class ImageDataLoaderTest {
@@ -32,7 +34,7 @@ public class ImageDataLoaderTest {
 	
 	private void testRenderToFormat(String format) throws IOException {
 		try (ICodec codec = CodecFactory.createCodec()) {
-			ByteArraySource src = ByteArraySource.fromClassPath("samples/sample.j2k");
+			ICodestreamSource src = new ClassPathSourceDescriptor("samples/sample.j2k").create();
 			
 			long start = System.currentTimeMillis();
 			ImageData data = codec.renderImage(1.0f, src);

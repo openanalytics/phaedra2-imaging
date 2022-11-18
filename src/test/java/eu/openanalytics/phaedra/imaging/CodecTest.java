@@ -15,16 +15,27 @@ import org.springframework.util.FileCopyUtils;
 
 import eu.openanalytics.phaedra.imaging.jp2k.CompressionConfig;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodec;
+import eu.openanalytics.phaedra.imaging.jp2k.ICodestreamSource;
 import eu.openanalytics.phaedra.imaging.jp2k.openjpeg.source.ByteArraySource;
+import eu.openanalytics.phaedra.imaging.jp2k.source.ClassPathSourceDescriptor;
 import eu.openanalytics.phaedra.imaging.util.ImageDataLoader;
 import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
 
 public class CodecTest {
 
+	public static void main(String[] args) {
+		try {
+			new CodecTest().testDecodeFull();
+			new CodecTest().testDecodeScaled();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	@Test
 	public void testDecodeFull() throws IOException {
 		try (ICodec codec = CodecFactory.createCodec()) {
-			ByteArraySource src = ByteArraySource.fromClassPath("samples/sample.j2k");
+			ICodestreamSource src = new ClassPathSourceDescriptor("samples/sample.j2k").create();
 			
 			long start = System.currentTimeMillis();
 			ImageData data = codec.renderImage(1.0f, src);
@@ -41,7 +52,7 @@ public class CodecTest {
 	@Test
 	public void testDecodeScaled() throws IOException {
 		try (ICodec codec = CodecFactory.createCodec()) {
-			ByteArraySource src = ByteArraySource.fromClassPath("samples/sample.j2k");
+			ICodestreamSource src = new ClassPathSourceDescriptor("samples/sample.j2k").create();
 			
 			long start = System.currentTimeMillis();
 			ImageData data = codec.renderImage(0.25f, src);
@@ -58,7 +69,7 @@ public class CodecTest {
 	@Test
 	public void testDecodeFixedSize() throws IOException {
 		try (ICodec codec = CodecFactory.createCodec()) {
-			ByteArraySource src = ByteArraySource.fromClassPath("samples/sample.j2k");
+			ICodestreamSource src = new ClassPathSourceDescriptor("samples/sample.j2k").create();
 			
 			long start = System.currentTimeMillis();
 			ImageData data = codec.renderImage(1000, 1000, src);
@@ -75,7 +86,7 @@ public class CodecTest {
 	@Test
 	public void testDecodeRegion() throws IOException {
 		try (ICodec codec = CodecFactory.createCodec()) {
-			ByteArraySource src = ByteArraySource.fromClassPath("samples/sample.j2k");
+			ICodestreamSource src = new ClassPathSourceDescriptor("samples/sample.j2k").create();
 			
 			long start = System.currentTimeMillis();
 			ImageData data = codec.renderImageRegion(1.0f, new Rectangle(10, 10, 10, 10), src);

@@ -2,6 +2,8 @@ package eu.openanalytics.phaedra.imaging.render;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -11,6 +13,7 @@ import org.springframework.util.Assert;
 import eu.openanalytics.phaedra.imaging.ImageData;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodec;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodestreamSource;
+import eu.openanalytics.phaedra.imaging.jp2k.ICodestreamSourceDescriptor;
 import eu.openanalytics.phaedra.imaging.util.ImageDataLoader;
 import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
 
@@ -33,47 +36,35 @@ public class ImageRenderService {
 		if (executor != null) executor.shutdownNow();
 	}
 	
-	public byte[] renderImage(ICodestreamSource[] sources, ImageRenderConfig cfg) throws IOException {
+	public byte[] renderImage(ICodestreamSourceDescriptor[] sources, ImageRenderConfig cfg) throws IOException {
 		
 		Assert.notEmpty(sources, "At least one codestream source must be specified");
 		Assert.notNull(cfg, "Image render config must be specified");
 		Assert.notEmpty(cfg.channelConfigs, "Image render config must contain at least one channel config");
 		Assert.isTrue(sources.length == cfg.channelConfigs.length, "Number of codestream sources must match number of channel configs");
 		
-		//TODO Checking why this MT approach hangs or crashes on Linux.
-		// Even when rendering a single source, it still hangs.
-		
-		// Submit each channel for rendering in parallel.
-//		List<Future<ImageData>> dataFutures = new ArrayList<>();
-//		for (int i = 0; i < sources.length; i++) {
-//			ICodestreamSource source = sources[i];
-//			Future<ImageData> dataFuture = useCodecAsync(codec -> {
-//				if (cfg.region == null) {
-//					return codec.renderImage(cfg.scale, source);
-//				} else {
-//					return codec.renderImageRegion(cfg.scale, cfg.region, source);	
-//				}
-//			});
-//			dataFutures.add(dataFuture);
-//		}
+		// Render channels in parallel.
+		List<Future<ImageData>> dataFutures = new ArrayList<>();
+		for (int i = 0; i < sources.length; i++) {
+			ICodestreamSourceDescriptor sourceDescriptor = sources[i];
+			Future<ImageData> dataFuture = useCodecAsync(codec -> {
+				ICodestreamSource source = sourceDescriptor.create();
+				if (cfg.region == null) {
+					return codec.renderImage(cfg.scale, source);
+				} else {
+					return codec.renderImageRegion(cfg.scale, cfg.region, source);	
+				}
+			});
+			dataFutures.add(dataFuture);
+		}
 		
 		// Collect all rendered channels.
-//		ImageData[] datas = new ImageData[dataFutures.size()];
-//		for (int i = 0; i < datas.length; i++) {
-//			try {
-//				datas[i] = dataFutures.get(i).get();
-//			} catch (Exception e) {
-//				throw new IOException("Error rendering image", e);
-//			}
-//		}
-		
-		ImageData[] datas = new ImageData[sources.length];
+		ImageData[] datas = new ImageData[dataFutures.size()];
 		for (int i = 0; i < datas.length; i++) {
-			ICodestreamSource source = sources[i];
-			if (cfg.region == null) {
-				datas[i] = useCodec(codec -> codec.renderImage(cfg.scale, source));				
-			} else {
-				datas[i] = useCodec(codec -> codec.renderImageRegion(cfg.scale, cfg.region, source));
+			try {
+				datas[i] = dataFutures.get(i).get();
+			} catch (Exception e) {
+				throw new IOException("Error rendering image", e);
 			}
 		}
 		
