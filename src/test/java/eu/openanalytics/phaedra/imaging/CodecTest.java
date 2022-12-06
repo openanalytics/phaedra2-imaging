@@ -23,15 +23,6 @@ import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
 
 public class CodecTest {
 
-	public static void main(String[] args) {
-		try {
-			new CodecTest().testDecodeFull();
-			new CodecTest().testDecodeScaled();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	@Test
 	public void testDecodeFull() throws IOException {
 		try (ICodec codec = CodecFactory.createCodec()) {

@@ -7,6 +7,8 @@ public class ByteArraySource extends GenericByteSource {
 
 	private byte[] array;
 	
+//	private final Logger logger = LoggerFactory.getLogger(getClass());
+	
 	public ByteArraySource(byte[] array) {
 		super();
 		this.array = array;
@@ -19,7 +21,7 @@ public class ByteArraySource extends GenericByteSource {
 	
 	@Override
 	protected byte[] doGetBytes(long pos, int len) throws IOException {
-		System.out.println(String.format("%s: Bytes requested from source: @%d + %d", Thread.currentThread(), pos, len));
+//		logger.debug(String.format("Bytes requested from source: @%d + %d", pos, len));
 		int start = (int) pos;
 		return Arrays.copyOfRange(array, start, start + len);
 	}

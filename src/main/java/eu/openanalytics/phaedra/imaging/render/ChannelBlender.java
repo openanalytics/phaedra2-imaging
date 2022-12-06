@@ -32,28 +32,31 @@ public class ChannelBlender {
 	}
 	
 	private void blendRaw(ImageData source, ImageData target, ChannelRenderConfig config) {
-		for (int i=0; i<source.pixels.length; i++) {
 
+		// Compute the full contrast range
+		double contrastCeil = Math.pow(2, source.depth) - 1;
+		int[] contrast = new int[] {
+				(int) (config.contrastMin * contrastCeil),
+				(int) (config.contrastMax * contrastCeil)
+		};
+		
+		// Use a configured color mask, converted from RGB to HSB
+		int maskR = (config.rgb & 0xFF0000) >> 16;
+		int maskG = (config.rgb & 0xFF00) >> 8;
+		int maskB = (config.rgb & 0xFF);
+		float[] colorMaskHSB = java.awt.Color.RGBtoHSB(maskR, maskG, maskB, null);
+		
+		for (int i=0; i<source.pixels.length; i++) {
 			int srcValue = source.pixels[i];
 			int destValue = target.pixels[i];
 			
 			// Apply contrast stretching and reduce to 8bit
-			double contrastCeil = Math.pow(2, source.depth) - 1;
-			int[] contrast = new int[] {
-					(int) (config.contrastMin * contrastCeil),
-					(int) (config.contrastMax * contrastCeil)
-			};
 			int grayValue = (int) (applyContrastStretch(srcValue, contrast) * 255);
 
-			// Start from the configured color mask.
-			int maskR = (config.rgb & 0xFF0000) >> 16;
-			int maskG = (config.rgb & 0xFF00) >> 8;
-			int maskB = (config.rgb & 0xFF);
-
 			// Convert to HSB, adjust brightness using grayValue, convert back to RGB
-			float[] colorMaskHSB = java.awt.Color.RGBtoHSB(maskR, maskG, maskB, null);
-			colorMaskHSB[2] = colorMaskHSB[2] * (grayValue / 255.0f);
-			srcValue = java.awt.Color.HSBtoRGB(colorMaskHSB[0], colorMaskHSB[1], colorMaskHSB[2]);
+			float brightness = colorMaskHSB[2] * (grayValue / 255.0f);
+			//TODO This is a very slow operation
+			srcValue = java.awt.Color.HSBtoRGB(colorMaskHSB[0], colorMaskHSB[1], brightness);
 
 			int srcR = (srcValue & 0xFF0000) >> 16;
 			int srcG = (srcValue & 0xFF00) >> 8;
