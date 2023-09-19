@@ -7,16 +7,38 @@
 		<groupId>eu.openanalytics.phaedra</groupId>
 		<artifactId>phaedra2-parent</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
+		<relativePath>../phaedra2-parent</relativePath>
 	</parent>
 
 	<artifactId>phaedra2-imaging</artifactId>
-	<packaging>jar</packaging>
+	<name>phaedra2-imaging</name>
 
-	<properties>
-		<docker.repoPrefix/>
-		<docker.imageName>${project.artifactId}</docker.imageName>
-	</properties>
-    
+	<dependencies>
+		<dependency>
+			<groupId>ome</groupId>
+			<artifactId>formats-gpl</artifactId>
+			<version>6.9.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-pool2</artifactId>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+            <plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<mainClass>eu.openanalytics.phaedra.imaging.CommandLineApp</mainClass>
+					<layout>ZIP</layout>
+					<classifier>exec</classifier>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	
     <!-- We cannot specify this in the parent POM, as the repositories are needed to fetch the parent pom.    -->
     <repositories>
         <!-- Maven queries repositories in the order that they are defined here.
@@ -45,30 +67,4 @@
 			<url>https://artifacts.openmicroscopy.org/artifactory/ome.releases</url>
 		</repository>
     </repositories>
-    
-	<dependencies>
-		<dependency>
-			<groupId>ome</groupId>
-			<artifactId>formats-gpl</artifactId>
-			<version>6.9.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-pool2</artifactId>
-		</dependency>
-	</dependencies>
-
-	<build>
-		<plugins>
-            <plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<mainClass>eu.openanalytics.phaedra.imaging.CommandLineApp</mainClass>
-					<layout>ZIP</layout>
-					<classifier>exec</classifier>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 </project>
