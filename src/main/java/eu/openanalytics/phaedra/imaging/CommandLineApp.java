@@ -5,6 +5,7 @@ import java.util.List;
 
 import eu.openanalytics.phaedra.imaging.jp2k.CompressionConfig;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodec;
+import eu.openanalytics.phaedra.imaging.jp2k.openjpeg.OpenJPEGLibLoader;
 import eu.openanalytics.phaedra.imaging.util.ImageDataLoader;
 import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
 
@@ -19,16 +20,23 @@ public class CommandLineApp {
 	}
 	
 	public void run(String[] args) throws Exception {
-		if (args[0].equalsIgnoreCase("encode")) encode(args);
-		else throw new IllegalArgumentException("Unsupported operation: " + args[0]);
-	}
-
-	public void encode(String[] args) throws Exception {
 		List<String> argList = new ArrayList<>();
 		for (int i = 0; i < args.length; i++) {
 			argList.add(args[i]);
 		}
+		String cmd = args[0].toLowerCase();
 		
+		if (cmd.equals("encode")) encode(argList);
+		else if (cmd.equals("copylibs")) copyLibs(argList);
+		else throw new IllegalArgumentException("Unsupported operation: " + cmd);
+	}
+
+	public void copyLibs(List<String> argList) throws Exception {
+		String destination = getArg("-d", argList);
+		OpenJPEGLibLoader.copyLibs(destination);
+	}
+	
+	public void encode(List<String> argList) throws Exception {
 		String inputFile = getArg("-i", argList);
 		String outputFile = getArg("-o", argList);
 		
