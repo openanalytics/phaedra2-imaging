@@ -19,6 +19,7 @@ public class OpenJPEGLibLoader {
 	
 	private static final String[] LIBS_LINUX = {
 			"native/linux/libopenjp2.so",
+			"native/linux/libopenjp2.so.7",
 			"native/linux/libopenjpegjni.so"
 	};
 	
