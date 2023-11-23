@@ -62,6 +62,10 @@
             <id>oa-nexus-snapshots</id>
             <url>https://nexus.openanalytics.eu/repository/snapshots/</url>
         </repository>
+        <repository>
+            <id>oa-nexus-releases</id>
+            <url>https://nexus.openanalytics.eu/repository/releases/</url>
+        </repository>
 		<repository>
 			<id>ome</id>
 			<url>https://artifacts.openmicroscopy.org/artifactory/ome.releases</url>
