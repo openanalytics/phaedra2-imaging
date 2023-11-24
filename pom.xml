@@ -6,12 +6,13 @@
 	<parent>
 		<groupId>eu.openanalytics.phaedra</groupId>
 		<artifactId>phaedra2-parent</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
-		<relativePath>../phaedra2-parent</relativePath>
+		<version>2.0.2</version>
+		<relativePath/>
 	</parent>
 
 	<artifactId>phaedra2-imaging</artifactId>
 	<name>phaedra2-imaging</name>
+	<version>2.0.2</version>
 
 	<dependencies>
 		<dependency>
@@ -38,7 +39,7 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
     <!-- We cannot specify this in the parent POM, as the repositories are needed to fetch the parent pom.    -->
     <repositories>
         <!-- Maven queries repositories in the order that they are defined here.
@@ -61,6 +62,10 @@
         <repository>
             <id>oa-nexus-snapshots</id>
             <url>https://nexus.openanalytics.eu/repository/snapshots/</url>
+        </repository>
+        <repository>
+            <id>oa-nexus-releases</id>
+            <url>https://nexus.openanalytics.eu/repository/releases/</url>
         </repository>
 		<repository>
 			<id>ome</id>
