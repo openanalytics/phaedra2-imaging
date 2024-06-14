@@ -1,11 +1,18 @@
 package eu.openanalytics.phaedra.imaging;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.FilenameUtils;
+import org.springframework.util.FileCopyUtils;
+
 import eu.openanalytics.phaedra.imaging.jp2k.CompressionConfig;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodec;
+import eu.openanalytics.phaedra.imaging.jp2k.ICodestreamSource;
 import eu.openanalytics.phaedra.imaging.jp2k.openjpeg.OpenJPEGLibLoader;
+import eu.openanalytics.phaedra.imaging.jp2k.openjpeg.source.ByteArraySource;
 import eu.openanalytics.phaedra.imaging.util.ImageDataLoader;
 import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
 
@@ -27,6 +34,7 @@ public class CommandLineApp {
 		String cmd = args[0].toLowerCase();
 		
 		if (cmd.equals("encode")) encode(argList);
+		else if (cmd.equals("decode")) decode(argList);
 		else if (cmd.equals("copylibs")) copyLibs(argList);
 		else throw new IllegalArgumentException("Unsupported operation: " + cmd);
 	}
@@ -58,6 +66,27 @@ public class CommandLineApp {
 		
 		try (ICodec codec = CodecFactory.createCodec()) {
 			codec.compressCodeStream(config, inputData, outputFile);
+		}
+	}
+	
+	public void decode(List<String> argList) throws Exception {
+		String inputFile = getArg("-i", argList);
+		String outputFile = getArg("-o", argList);
+		
+		String outputFormat = FilenameUtils.getExtension(outputFile);
+		
+		float scale = 1.0f;
+		String scaleString = getArg("-scale", argList);
+		if (scaleString != null) scale = Float.parseFloat(scaleString);
+		
+		byte[] bytes = FileCopyUtils.copyToByteArray(new File(inputFile));
+		
+		try (ICodec codec = CodecFactory.createCodec()) {
+			ICodestreamSource source = new ByteArraySource(bytes);
+			ImageData imageData = codec.renderImage(scale, source);
+			try (FileOutputStream fOut = new FileOutputStream(outputFile)) {
+				ImageDataLoader.write(imageData, outputFormat, fOut);
+			}
 		}
 	}
 	
