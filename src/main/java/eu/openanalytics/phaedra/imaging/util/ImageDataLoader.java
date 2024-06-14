@@ -15,6 +15,8 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FilenameUtils;
+import org.eclipse.swt.graphics.ImageLoader;
+import org.eclipse.swt.graphics.PaletteData;
 import org.springframework.util.FileCopyUtils;
 
 import eu.openanalytics.phaedra.imaging.ImageData;
@@ -99,19 +101,38 @@ public class ImageDataLoader {
 	}
 	
 	public static void write(ImageData data, String format, OutputStream out) throws IOException {
-		BufferedImage bi = ImageDataUtils.toBufferedImage(data);
-
-		BufferedImage biRGB = bi;
-		if (data.depth != 24) {
-			int w = bi.getWidth();
-		    int h = bi.getHeight();
-		    int[] pixels = new int[w * h];
-		    bi.getRGB(0, 0, w, h, pixels, 0, w);
-		    biRGB = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-		    biRGB.setRGB(0, 0, w, h, pixels, 0, w);
-		}
+		// SWT is about 35% faster compared to ImageIO
+		String codec = System.getProperty("phaedra2.imaging.writer.codec", "swt");
 		
-		//TODO Look for alternative methods. This has pretty bad performance, especially for PNG!
-		ImageIO.write(biRGB, format, out);
+		if (codec.equals("swt")) {
+			org.eclipse.swt.graphics.ImageData imgData = new org.eclipse.swt.graphics.ImageData(data.width, data.height, data.depth, new PaletteData(0xFF0000, 0xFF00, 0xFF));
+			for (int line = 0; line < data.height; line++) {
+				imgData.setPixels(0, line, data.width, data.pixels, line * data.width);
+			}
+			ImageLoader loader = new ImageLoader();
+			loader.data = new org.eclipse.swt.graphics.ImageData[] { imgData };
+			loader.save(out, toSWTFormat(format));
+		} else {
+			BufferedImage bi = ImageDataUtils.toBufferedImage(data);
+			BufferedImage biRGB = bi;
+			if (data.depth != 24) {
+				int w = bi.getWidth();
+				int h = bi.getHeight();
+				int[] pixels = new int[w * h];
+				bi.getRGB(0, 0, w, h, pixels, 0, w);
+				biRGB = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+				biRGB.setRGB(0, 0, w, h, pixels, 0, w);
+			}
+			ImageIO.write(biRGB, format, out);
+		}
+	}
+	
+	private static int toSWTFormat(String format) {
+		if (format == null) return 4;
+		format = format.toLowerCase().trim();
+		if (format.equals("jpg") || format.equals("jpeg")) return 4;
+		if (format.equals("png")) return 5;
+		if (format.equals("tif") || format.equals("tiff")) return 6; 
+		return 4;
 	}
 }

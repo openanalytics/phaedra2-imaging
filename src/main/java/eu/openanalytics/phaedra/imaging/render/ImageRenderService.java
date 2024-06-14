@@ -8,6 +8,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
 import eu.openanalytics.phaedra.imaging.ImageData;
@@ -26,6 +28,8 @@ public class ImageRenderService {
 	private CodecPool codecPool;
 	private ExecutorService executor;
 	
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+	
 	public ImageRenderService() {
 		codecPool = new CodecPool();
 		executor = Executors.newFixedThreadPool(10);
@@ -42,6 +46,8 @@ public class ImageRenderService {
 		Assert.notNull(cfg, "Image render config must be specified");
 		Assert.notEmpty(cfg.channelConfigs, "Image render config must contain at least one channel config");
 		Assert.isTrue(sources.length == cfg.channelConfigs.length, "Number of codestream sources must match number of channel configs");
+		
+		long startTime = System.currentTimeMillis();
 		
 		// Render channels in parallel.
 		List<Future<ImageData>> dataFutures = new ArrayList<>();
@@ -68,14 +74,23 @@ public class ImageRenderService {
 			}
 		}
 		
+		long durationMsDecode = System.currentTimeMillis() - startTime;
+		startTime = System.currentTimeMillis();
+		
 		// Blend channels into a single result image.
 		ImageData resultImage = new ChannelBlender().blend(datas, cfg);
-		
 		ImageDataUtils.applyGamma(resultImage, cfg.gamma);
+		
+		long durationMsBlend = System.currentTimeMillis() - startTime;
+		startTime = System.currentTimeMillis();
 		
 		// Convert the result image to the desired image format.
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ImageDataLoader.write(resultImage, cfg.format, bos);
+		
+		long durationMsFormat = System.currentTimeMillis() - startTime;
+		
+		logger.debug(String.format("Rendered %d channels to %dx%d pixels in %s: decode [%d ms], blend [%d ms], format [%d ms]", sources.length, resultImage.width, resultImage.height, cfg.format, durationMsDecode, durationMsBlend, durationMsFormat));
 		return bos.toByteArray();
 	}
 	
