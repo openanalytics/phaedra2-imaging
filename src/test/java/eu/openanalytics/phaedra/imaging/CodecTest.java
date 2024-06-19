@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,10 +15,11 @@ import org.springframework.util.FileCopyUtils;
 import eu.openanalytics.phaedra.imaging.jp2k.CompressionConfig;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodec;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodestreamSource;
-import eu.openanalytics.phaedra.imaging.jp2k.openjpeg.source.ByteArraySource;
 import eu.openanalytics.phaedra.imaging.jp2k.source.ClassPathSourceDescriptor;
 import eu.openanalytics.phaedra.imaging.util.ImageDataLoader;
 import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
+import eu.openanalytics.phaedra.imaging.util.Rectangle;
+import loci.formats.cache.ByteArraySource;
 
 public class CodecTest {
 
@@ -125,7 +125,19 @@ public class CodecTest {
 			assertNotNull(encoded);
 			assertTrue(encoded.length > 0);
 			
-			ImageData dataAfterDecode = codec.renderImage(1.0f, new ByteArraySource(encoded));
+			ImageData dataAfterDecode = codec.renderImage(1.0f, new ICodestreamSource() {
+				@Override
+				public long getSize() throws IOException {
+					return encoded.length;
+				}
+				@Override
+				public byte[] getBytes(long pos, int len) throws IOException {
+					int remaining = (int) (encoded.length - pos);
+					byte[] buffer = new byte[Math.min(len, remaining)];
+					System.arraycopy(encoded, (int) pos, buffer, 0, buffer.length);
+					return buffer;
+				}
+			});
 			
 			assertEquals(data.width, dataAfterDecode.width);
 			assertEquals(data.height, dataAfterDecode.height);

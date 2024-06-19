@@ -1,8 +1,7 @@
 package eu.openanalytics.phaedra.imaging.render;
 
-import java.awt.Rectangle;
-
 import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
+import eu.openanalytics.phaedra.imaging.util.Rectangle;
 
 public class ImageRenderConfig {
 

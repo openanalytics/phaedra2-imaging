@@ -31,8 +31,9 @@ public class ImageRenderService {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	
 	public ImageRenderService() {
-		codecPool = new CodecPool();
-		executor = Executors.newFixedThreadPool(10);
+		int maxPoolSize = Integer.parseInt(System.getProperty("phaedra2.imaging.renderservice.codec.pool.size", "8"));
+		codecPool = new CodecPool(maxPoolSize);
+		executor = Executors.newFixedThreadPool(maxPoolSize);
 	}
 	
 	public void close() {

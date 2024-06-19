@@ -31,3 +31,6 @@ hs_err_pid*
 .project
 .classpath
 /phaedra2-imaging.iml
+
+/*.dll
+/*.so

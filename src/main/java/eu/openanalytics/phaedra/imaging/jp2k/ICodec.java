@@ -1,9 +1,9 @@
 package eu.openanalytics.phaedra.imaging.jp2k;
 
-import java.awt.Rectangle;
 import java.io.IOException;
 
 import eu.openanalytics.phaedra.imaging.ImageData;
+import eu.openanalytics.phaedra.imaging.util.Rectangle;
 
 public interface ICodec extends AutoCloseable {
 
