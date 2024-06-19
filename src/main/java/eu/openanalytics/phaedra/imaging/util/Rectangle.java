@@ -38,4 +38,9 @@ public class Rectangle {
 		}
 		return null;
 	}
+	
+	@Override
+	public String toString() {
+		return String.format("Rectangle [%d, %d, %d, %d]", x, y, width, height);
+	}
 }

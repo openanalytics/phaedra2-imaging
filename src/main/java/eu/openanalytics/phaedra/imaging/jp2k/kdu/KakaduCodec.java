@@ -112,8 +112,8 @@ public class KakaduCodec implements ICodec {
 			int bpp = getBitDepth(stream);
 			data = createImageData(w, h, bpp);
 			
-			doRender(fullSize, expand, data, 0, 0, stream);
 			//TODO There may be additional black pixels below and to the right of the rendered image, due to the scale rounding.
+			doRender(fullSize, expand, data, 0, 0, stream);
 		} catch (Exception e) {
 			throw new IOException("Failed to render image", e);
 		} finally {
@@ -151,11 +151,13 @@ public class KakaduCodec implements ICodec {
 		
 		lock.lock();
 		try (var stream = initCodestream(source)) {
+			int[] fullBounds = getFullImageBounds(stream);
 			int[] expand = calculateExpand(scale, 0, stream);
 			int[] scaledBounds = getScaledRegionBounds(region.getCoordinates(), expand, stream);
 			int bpp = getBitDepth(stream);
+
 			data = createImageData(scaledBounds[2], scaledBounds[3], bpp);
-			//TODO Clip region, as it may lie outside full image size
+			clipRegion(region, Rectangle.of(fullBounds));
 			doRender(region.getCoordinates(), expand, data, 0, 0, stream);
 		} catch (Exception e) {
 			throw new IOException("Failed to render image", e);
@@ -191,9 +193,8 @@ public class KakaduCodec implements ICodec {
 			kduCodestream.Access_siz().Access_cluster("QCD").Set("Qstep", 0, 0, qstep);
 			kduCodestream.Access_siz().Finalize_all();
 
-			//TODO Translate psnr to slope
-			int slope = 39000;
-			if (!config.reversible) kduCodestream.Set_min_slope_threshold(slope);
+			//TODO Allow slope configuration
+			if (!config.reversible) kduCodestream.Set_min_slope_threshold(39000);
 			
 			// Create compressor
 			Kdu_stripe_compressor compressor = new Kdu_stripe_compressor();
@@ -416,6 +417,21 @@ public class KakaduCodec implements ICodec {
 		return expand;
 	}
 
+	private void clipRegion(Rectangle region, Rectangle fullSize) {
+		int maxX = fullSize.width-1;
+		int maxY = fullSize.height-1;
+		
+		region.x = Math.max(0, region.x);
+		region.y = Math.max(0, region.y);
+		
+		//Note: this may cause a small duplicate stripe on the edge.
+		if (region.x + region.width > maxX) region.x = Math.max(0, maxX - region.width);
+		if (region.y + region.height > maxY) region.y = Math.max(0, maxY - region.height);
+		
+		if (region.x == 0 && region.width > fullSize.width) region.width = fullSize.width;
+		if (region.y == 0 && region.height > fullSize.height) region.height = fullSize.height;
+	}
+	
 	private ImageData createImageData(int w, int h, int depth) {
 		ImageData data = new ImageData();
 		data.width = w;
