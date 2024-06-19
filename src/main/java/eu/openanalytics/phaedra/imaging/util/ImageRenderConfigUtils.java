@@ -1,6 +1,5 @@
 package eu.openanalytics.phaedra.imaging.util;
 
-import java.awt.Rectangle;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Consumer;

@@ -4,9 +4,7 @@ import java.io.IOException;
 
 import org.openjpeg.JavaByteSource;
 
-import eu.openanalytics.phaedra.imaging.jp2k.ICodestreamSource;
-
-public abstract class GenericByteSource extends JavaByteSource implements ICodestreamSource {
+public abstract class GenericByteSource extends JavaByteSource {
 	
 	private long pos;
 	

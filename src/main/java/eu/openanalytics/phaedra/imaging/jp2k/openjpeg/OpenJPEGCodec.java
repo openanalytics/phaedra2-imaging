@@ -1,6 +1,5 @@
 package eu.openanalytics.phaedra.imaging.jp2k.openjpeg;
 
-import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
@@ -16,7 +15,9 @@ import eu.openanalytics.phaedra.imaging.ImageData;
 import eu.openanalytics.phaedra.imaging.jp2k.CompressionConfig;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodec;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodestreamSource;
+import eu.openanalytics.phaedra.imaging.jp2k.openjpeg.source.GenericByteSource;
 import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
+import eu.openanalytics.phaedra.imaging.util.Rectangle;
 
 public class OpenJPEGCodec implements ICodec {
 
@@ -113,7 +114,7 @@ public class OpenJPEGCodec implements ICodec {
 		try {
 			int[] fullSize = decoder.getSize(asByteSource(source));
 			// If the region falls outside the image, render only the part within the image.
-			Rectangle clippedRegion = region.intersection(new Rectangle(0, 0, fullSize[0], fullSize[1]));
+			Rectangle clippedRegion = region.intersect(Rectangle.of(0, 0, fullSize[0], fullSize[1]));
 			if (clippedRegion.width == 0 || clippedRegion.height == 0) throw new RuntimeException("Cannot render image region: " + clippedRegion); 
 			return decode(source, fullSize, scale, clippedRegion);
 		} finally {
@@ -130,7 +131,6 @@ public class OpenJPEGCodec implements ICodec {
 		image.pixels = data.pixels;
 
 		EncodingParameters parameters = parseFromConfig(config);
-		System.out.println("Encoding with " + paramsToString(parameters));
 		
 		// Reduce resolutionLevels if needed (image too small).
 		int size = Math.min(image.width, image.height);
@@ -189,8 +189,20 @@ public class OpenJPEGCodec implements ICodec {
 	}
 	
 	private JavaByteSource asByteSource(ICodestreamSource source) {
-		if (source instanceof JavaByteSource) return (JavaByteSource) source;
-		else throw new RuntimeException("Unsupported OpenJPEG source type: " + source.getClass());
+		return new GenericByteSource() {
+			@Override
+			protected long doGetSize() {
+				try {
+					return source.getSize();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			}
+			@Override
+			protected byte[] doGetBytes(long pos, int len) throws IOException {
+				return source.getBytes(pos, len);
+			}
+		};
 	}
 	
 	private EncodingParameters parseFromConfig(CompressionConfig config) {
@@ -214,10 +226,5 @@ public class OpenJPEGCodec implements ICodec {
 		parameters.psnr = config.reversible ? 0 : config.psnr;	
 		
 		return parameters;
-	}
-	
-	private String paramsToString(EncodingParameters params) {
-		return String.format("EncodingParameters { resLevels: %d, order: %s, psnr: %d, compFactor: %d, precincts: %d }",
-				params.resolutionLevels, params.progressionOrder, params.psnr, params.compressionFactor, params.precincts.length);
 	}
 }

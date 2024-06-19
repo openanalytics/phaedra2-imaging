@@ -1,5 +1,7 @@
 package eu.openanalytics.phaedra.imaging.render;
 
+import java.time.Duration;
+
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
@@ -18,14 +20,15 @@ public class CodecPool extends GenericObjectPool<ICodec> {
 	private static final long EVICTION_DELAY = 300000L; // Codecs are eligible for eviction after 5 minutes. 
 	private static final long EVICTION_RUN_INTERVAL = 900000L; // Check for eviction every 15 minutes.
 	
-	public CodecPool() {
-		super(new PooledCodecFactory(), getConfig());
+	public CodecPool(int maxPoolSize) {
+		super(new PooledCodecFactory(), getConfig(maxPoolSize));
 	}
 	
-	private static GenericObjectPoolConfig<ICodec> getConfig() {
+	private static GenericObjectPoolConfig<ICodec> getConfig(int maxPoolSize) {
 		GenericObjectPoolConfig<ICodec> config = new GenericObjectPoolConfig<>();
-		config.setMinEvictableIdleTimeMillis(EVICTION_DELAY);
-		config.setTimeBetweenEvictionRunsMillis(EVICTION_RUN_INTERVAL);
+		config.setMaxTotal(maxPoolSize);
+		config.setMinEvictableIdleTime(Duration.ofMillis(EVICTION_DELAY));
+		config.setTimeBetweenEvictionRuns(Duration.ofMillis(EVICTION_RUN_INTERVAL));
 		return config;
 	}
 	

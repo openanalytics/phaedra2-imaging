@@ -2,7 +2,9 @@ package eu.openanalytics.phaedra.imaging;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
@@ -11,8 +13,8 @@ import org.springframework.util.FileCopyUtils;
 import eu.openanalytics.phaedra.imaging.jp2k.CompressionConfig;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodec;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodestreamSource;
+import eu.openanalytics.phaedra.imaging.jp2k.kdu.KakaduLibLoader;
 import eu.openanalytics.phaedra.imaging.jp2k.openjpeg.OpenJPEGLibLoader;
-import eu.openanalytics.phaedra.imaging.jp2k.openjpeg.source.ByteArraySource;
 import eu.openanalytics.phaedra.imaging.util.ImageDataLoader;
 import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
 
@@ -42,6 +44,7 @@ public class CommandLineApp {
 	public void copyLibs(List<String> argList) throws Exception {
 		String destination = getArg("-d", argList);
 		OpenJPEGLibLoader.copyLibs(destination);
+		KakaduLibLoader.copyLibs(destination);
 	}
 	
 	public void encode(List<String> argList) throws Exception {
@@ -63,9 +66,13 @@ public class CommandLineApp {
 		
 		String resLevels = getArg("-resolution-levels", argList);
 		if (resLevels != null) config.resolutionLevels = Integer.valueOf(resLevels);
-		
+	
 		try (ICodec codec = CodecFactory.createCodec()) {
+			long start = System.currentTimeMillis();
 			codec.compressCodeStream(config, inputData, outputFile);
+			long encodeDuration = System.currentTimeMillis() - start;
+			long fileSize = new File(outputFile).length();
+			System.out.println(String.format("Encoded %d pixels to %d bytes in %d ms", inputData.pixels.length, fileSize, encodeDuration));
 		}
 	}
 	
@@ -82,11 +89,26 @@ public class CommandLineApp {
 		byte[] bytes = FileCopyUtils.copyToByteArray(new File(inputFile));
 		
 		try (ICodec codec = CodecFactory.createCodec()) {
-			ICodestreamSource source = new ByteArraySource(bytes);
+			ICodestreamSource source = new ICodestreamSource() {
+				@Override
+				public long getSize() throws IOException {
+					return bytes.length;
+				}
+				@Override
+				public byte[] getBytes(long pos, int len) throws IOException {
+					int start = (int) pos;
+					return Arrays.copyOfRange(bytes, start, start + len);
+				}
+			};
+			long start = System.currentTimeMillis();
 			ImageData imageData = codec.renderImage(scale, source);
+			long decodeDuration = System.currentTimeMillis() - start;
+			start = System.currentTimeMillis();
 			try (FileOutputStream fOut = new FileOutputStream(outputFile)) {
 				ImageDataLoader.write(imageData, outputFormat, fOut);
 			}
+			long writeDuration = System.currentTimeMillis() - start;
+			System.out.println(String.format("Decoded %d bytes to %d pixels in %d ms, written to %s file in %d ms", bytes.length, imageData.pixels.length, decodeDuration, outputFormat, writeDuration));
 		}
 	}
 	
