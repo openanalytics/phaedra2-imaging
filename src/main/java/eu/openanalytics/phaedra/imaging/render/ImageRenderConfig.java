@@ -33,8 +33,10 @@ public class ImageRenderConfig {
 		format = "jpg";
 		gamma = 1.0f;
 		scale = 1.0f;
-		for (int i = 0; i < channelConfigs.length; i++) {
-			channelConfigs[i].fillDefaults();
+		if (channelConfigs != null) {
+			for (int i = 0; i < channelConfigs.length; i++) {
+				channelConfigs[i].fillDefaults();
+			}
 		}
 	}
 	
