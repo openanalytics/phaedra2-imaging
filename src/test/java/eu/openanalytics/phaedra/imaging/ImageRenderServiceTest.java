@@ -22,10 +22,10 @@ public class ImageRenderServiceTest {
 				new ClassPathSourceDescriptor("samples/sample-16bit-raw2.jp2k"),
 				new ClassPathSourceDescriptor("samples/sample-16bit-raw3.jp2k")
 		};
-		ImageRenderConfig cfg = new ImageRenderConfig();
+		ImageRenderConfig cfg = new ImageRenderConfig().withDefaults();
 		cfg.channelConfigs = new ChannelRenderConfig[sourceDescriptors.length];
 		for (int i = 0; i < sourceDescriptors.length; i++) {
-			cfg.channelConfigs[i] = new ChannelRenderConfig();
+			cfg.channelConfigs[i] = new ChannelRenderConfig().withDefaults();
 			cfg.channelConfigs[i].name = "Raw" + (i + 1);
 			cfg.channelConfigs[i].rgb = 255 << (i*8);
 		}
