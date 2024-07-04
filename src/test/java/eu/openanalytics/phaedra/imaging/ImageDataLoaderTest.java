@@ -16,7 +16,6 @@ import org.springframework.util.FileCopyUtils;
 
 import eu.openanalytics.phaedra.imaging.jp2k.ICodec;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodestreamSource;
-import eu.openanalytics.phaedra.imaging.jp2k.openjpeg.source.ByteArraySource;
 import eu.openanalytics.phaedra.imaging.jp2k.source.ClassPathSourceDescriptor;
 import eu.openanalytics.phaedra.imaging.util.ImageDataLoader;
 
@@ -67,7 +66,7 @@ public class ImageDataLoaderTest {
 	}
 	
 	private void testLoadFromFormat(String path) throws IOException {
-		try (InputStream input = ByteArraySource.class.getClassLoader().getResourceAsStream(path)) {
+		try (InputStream input = CodecFactory.class.getClassLoader().getResourceAsStream(path)) {
 			File tempFile = Files.createTempFile("ph2-testfile", "." + FilenameUtils.getExtension(path)).toFile();
 			tempFile.deleteOnExit();
 			
