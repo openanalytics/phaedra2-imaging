@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 import javax.imageio.ImageIO;
 
@@ -29,9 +30,33 @@ import loci.formats.in.TiffReader;
 public class ImageDataLoader {
 
 	public static ImageData load(String path) throws IOException {
-		BufferedImage image = ImageIO.read(new File(path));
-		if (image == null) return loadWithBioFormats(path);
-		else return ImageDataUtils.toImageData(image);
+		Supplier<ImageData> bioLoader = () -> {
+			try {
+				return loadWithBioFormats(path);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		};
+		Supplier<ImageData> imageIOLoader = () -> {
+			try {
+				BufferedImage image = ImageIO.read(new File(path));
+				return (image == null) ? null : ImageDataUtils.toImageData(image);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		};
+		
+		ImageData data = null;
+		String codecId = System.getProperty("phaedra2.imaging.codec", "bioformats");
+		if (codecId.equalsIgnoreCase("bioformats")) {
+			data = bioLoader.get();
+			if (data == null) data = imageIOLoader.get();
+		} else {
+			data = imageIOLoader.get();
+			if (data == null) data = bioLoader.get();
+		}
+		
+		return data;
 	}
 	
 	public static ImageData load(InputStream input) throws IOException {
