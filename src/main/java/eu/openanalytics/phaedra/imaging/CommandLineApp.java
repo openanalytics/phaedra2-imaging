@@ -1,10 +1,13 @@
 package eu.openanalytics.phaedra.imaging;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
@@ -34,24 +37,57 @@ public class CommandLineApp {
 			argList.add(args[i]);
 		}
 		String cmd = args[0].toLowerCase();
+
+		runCmd(cmd, argList);
+	}
+
+	public void server(List<String> argList) throws Exception {
+		BufferedReader inReader = new BufferedReader(new InputStreamReader(System.in));
 		
-		if (cmd.equals("encode")) encode(argList);
+		List<String> cmdLine = readInCmd(inReader);
+		String cmd = cmdLine.get(0);
+		
+		while (!cmd.equalsIgnoreCase("quit")) {
+			try {
+				runCmd(cmd, cmdLine.subList(1, cmdLine.size()));
+				System.out.println("ok");
+			} catch (Exception e) {
+				System.err.println("error: " + e.getMessage());
+			}
+
+			cmdLine = readInCmd(inReader);
+			cmd = cmdLine.get(0);
+		}
+	}
+	
+	private List<String> readInCmd(BufferedReader inReader) throws IOException {
+		String line = inReader.readLine();
+		if (line == null) return Collections.singletonList("quit");
+		List<String> args = Arrays.stream(line.split(" ")).toList();
+		return args;
+	}
+	
+	private void runCmd(String cmd, List<String> argList) throws Exception {
+		if (cmd.equals("server")) server(argList);
+		else if (cmd.equals("encode")) encode(argList);
 		else if (cmd.equals("decode")) decode(argList);
 		else if (cmd.equals("copylibs")) copyLibs(argList);
 		else throw new IllegalArgumentException("Unsupported operation: " + cmd);
 	}
-
-	public void copyLibs(List<String> argList) throws Exception {
+	
+	private void copyLibs(List<String> argList) throws Exception {
 		String destination = getArg("-d", argList);
 		OpenJPEGLibLoader.copyLibs(destination);
 		KakaduLibLoader.copyLibs(destination);
 	}
 	
-	public void encode(List<String> argList) throws Exception {
+	private void encode(List<String> argList) throws Exception {
 		String inputFile = getArg("-i", argList);
 		String outputFile = getArg("-o", argList);
 		
+		long start = System.currentTimeMillis();
 		ImageData inputData = ImageDataLoader.load(inputFile);
+		long decodeInputDuration = System.currentTimeMillis() - start;
 		
 		String depthArg = getArg("-depth", argList);
 		if (depthArg != null) inputData = ImageDataUtils.changeDepth(inputData, Integer.valueOf(depthArg));
@@ -68,15 +104,15 @@ public class CommandLineApp {
 		if (resLevels != null) config.resolutionLevels = Integer.valueOf(resLevels);
 	
 		try (ICodec codec = CodecFactory.createCodec()) {
-			long start = System.currentTimeMillis();
+			start = System.currentTimeMillis();
 			codec.compressCodeStream(config, inputData, outputFile);
 			long encodeDuration = System.currentTimeMillis() - start;
 			long fileSize = new File(outputFile).length();
-			System.out.println(String.format("Encoded %d pixels to %d bytes in %d ms", inputData.pixels.length, fileSize, encodeDuration));
+			System.out.println(String.format("Encoded %d pixels to %d bytes: %dms to decode input, %dms to encode output", inputData.pixels.length, fileSize, decodeInputDuration, encodeDuration));
 		}
 	}
 	
-	public void decode(List<String> argList) throws Exception {
+	private void decode(List<String> argList) throws Exception {
 		String inputFile = getArg("-i", argList);
 		String outputFile = getArg("-o", argList);
 		
