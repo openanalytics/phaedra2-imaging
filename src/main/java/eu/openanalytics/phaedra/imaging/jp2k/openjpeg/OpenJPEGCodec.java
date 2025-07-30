@@ -165,13 +165,14 @@ public class OpenJPEGCodec implements ICodec {
 	
 	private ImageData decode(ICodestreamSource source, int[] fullSize, float scale, Rectangle region) {
 		int discardLevels = calculateDiscardLevels(fullSize, scale);
-		
+		// TODO: temporary hardcoded value for threads, find nice way to set this.
+		int threads = 1;
 		int[] regionPoints = null;
 		if (region != null) {
 			regionPoints = new int[] { region.x, region.y, region.x + region.width, region.y + region.height };
 		}
 		
-		ImagePixels img = decoder.decode(asByteSource(source), discardLevels, regionPoints);
+		ImagePixels img = decoder.decode(asByteSource(source), discardLevels, regionPoints, threads);
 		ImageData data = createImageData(img.width, img.height, img.depth);
 		data.pixels = img.pixels;
 		

@@ -1,23 +1,3 @@
-/**
- * Phaedra II
- *
- * Copyright (C) 2016-2025 Open Analytics
- *
- * ===========================================================================
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the Apache License as published by
- * The Apache Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * Apache License for more details.
- *
- * You should have received a copy of the Apache License
- * along with this program.  If not, see <http://www.apache.org/licenses/>
- */
 package org.openjpeg;
 
 public class OpenJPEGDecoder {
@@ -37,7 +17,7 @@ public class OpenJPEGDecoder {
 	 * @param discardLevels The number of resolution levels to discard.
 	 * @return The first component of the decoded image.
 	 */
-	public native ImagePixels decode(JavaByteSource src, int discardLevels);
+	public native ImagePixels decode(JavaByteSource src, int discardLevels, int threads);
 	
 	/**
 	 * Decode a region of a JPEG2000 image, optionally discarding resolution levels.
@@ -47,5 +27,5 @@ public class OpenJPEGDecoder {
 	 * @param region The region of the image to decode as an array of coordinates: [x0, y0, x1, y1].
 	 * @return The first component of the decoded image.
 	 */
-	public native ImagePixels decode(JavaByteSource src, int discardLevels, int[] region);
+	public native ImagePixels decode(JavaByteSource src, int discardLevels, int[] region, int threads);
 }
