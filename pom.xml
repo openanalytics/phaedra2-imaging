@@ -18,7 +18,10 @@
 		<dependency>
 			<groupId>ome</groupId>
 			<artifactId>formats-gpl</artifactId>
-			<version>6.9.1</version>
+			<version>8.2.0</version>
+			<exclusions>
+			  <exclusion><groupId>cisd</groupId><artifactId>jhdf5</artifactId></exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
