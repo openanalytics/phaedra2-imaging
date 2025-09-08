@@ -165,7 +165,6 @@ public class OpenJPEGCodec implements ICodec {
 	
 	private ImageData decode(ICodestreamSource source, int[] fullSize, float scale, Rectangle region) {
 		int discardLevels = calculateDiscardLevels(fullSize, scale);
-		// TODO: temporary hardcoded value for threads, find nice way to set this.
 		int threads = Integer.parseInt(System.getProperty("phaedra2.imaging.openjpeg.decode.threads", "1"));
 		int[] regionPoints = null;
 		if (region != null) {

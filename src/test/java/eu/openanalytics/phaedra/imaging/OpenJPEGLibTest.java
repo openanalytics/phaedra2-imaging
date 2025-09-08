@@ -60,7 +60,7 @@ public class OpenJPEGLibTest {
 		};
 		try {
 			long start = System.currentTimeMillis();
-			int[] pixels = decoder.decode(byteSource, 0).pixels;
+			int[] pixels = decoder.decode(byteSource, 0, 1).pixels;
 			long duration = System.currentTimeMillis() - start;
 			System.out.println(String.format("Decoded %d pixels in %d ms", pixels.length, duration));
 		} finally {
