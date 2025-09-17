@@ -166,29 +166,13 @@ public class ImageDataUtils {
 	 */
 	public static ImageData scale(ImageData data, int w, int h) {
 		// Convert to a BufferedImage, and use Graphics2D to draw on a resized image.
-		long start = System.currentTimeMillis();
 		BufferedImage image = toBufferedImage(data);
-		long step_1 = System.currentTimeMillis() - start;
 		BufferedImage resizedImage = new BufferedImage(w, h, image.getType());
-		long step_2 = System.currentTimeMillis() - start - step_1;
 	    Graphics2D graphics2D = resizedImage.createGraphics();
-		long step_3 = System.currentTimeMillis() - start - step_1 - step_2;
 	    graphics2D.drawImage(image, 0, 0, w, h, null);
 	    graphics2D.dispose();
-		long step_4 = System.currentTimeMillis() - start - step_1 - step_2 - step_3;
 
-		int[] result = new int[w * h];
-		resizedImage.getRGB(0,0,w,h, result,0,w);
-		ImageData resultData = new ImageData();
-		resultData.width = w;
-		resultData.height = h;
-		resultData.depth = data.depth;
-		resultData.pixels = result;
-
-		long step_5 = System.currentTimeMillis() - start - step_1 - step_2 - step_3 - step_4;
-		logger.info("Image scaling steps (ms): toBI {}, createBI {}, createGraphics {}, draw {}, toimagedata {}", step_1, step_2, step_3, step_4, step_5);
-
-	    return resultData;
+	    return toImageData(resizedImage);
 
 	}
 	
@@ -251,6 +235,7 @@ public class ImageDataUtils {
 			case BufferedImage.TYPE_INT_RGB:
 			case BufferedImage.TYPE_INT_ARGB:
 			case BufferedImage.TYPE_INT_ARGB_PRE: {
+				logger.info("here");
 				int[] src = ((java.awt.image.DataBufferInt) image.getRaster().getDataBuffer()).getData();
 				System.arraycopy(src, 0, data.pixels, 0, src.length);
 				break;
