@@ -224,9 +224,6 @@ public class ImageDataUtils {
 	/**
 	 * Convert a BufferedImage to an ImageData object.
 	 */
-	/**
-	 * Convert a BufferedImage to an ImageData object.
-	 */
 	public static ImageData toImageData(BufferedImage image) {
 		ImageData data = initNew(image.getWidth(), image.getHeight(), getBitDepth(image));
 		for (int x = 0; x < data.width; x++) {
