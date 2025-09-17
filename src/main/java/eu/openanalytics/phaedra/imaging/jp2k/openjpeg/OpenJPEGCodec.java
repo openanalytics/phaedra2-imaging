@@ -186,13 +186,10 @@ public class OpenJPEGCodec implements ICodec {
 			expectedSize[0] = (int) Math.ceil(region.width * scale);
 			expectedSize[1] = (int) Math.ceil(region.height * scale);
 		}
-		long startTime = System.currentTimeMillis();
 		if (expectedSize[0] != img.width || expectedSize[1] != img.height) {
 			data = ImageDataUtils.scale(data, expectedSize[0], expectedSize[1]);	
 		}
-		long durationMs = System.currentTimeMillis() - startTime;
-		logger.info("Scaling took {} ms", durationMs);
-		
+
 		return data;
 	}
 

@@ -235,6 +235,7 @@ public class ImageDataUtils {
 			case BufferedImage.TYPE_INT_RGB:
 			case BufferedImage.TYPE_INT_ARGB:
 			case BufferedImage.TYPE_INT_ARGB_PRE: {
+				logger.info("here");
 				int[] src = ((java.awt.image.DataBufferInt) image.getRaster().getDataBuffer()).getData();
 				System.arraycopy(src, 0, data.pixels, 0, src.length);
 				break;
