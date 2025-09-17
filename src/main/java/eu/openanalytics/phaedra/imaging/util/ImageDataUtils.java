@@ -224,64 +224,21 @@ public class ImageDataUtils {
 	/**
 	 * Convert a BufferedImage to an ImageData object.
 	 */
+	/**
+	 * Convert a BufferedImage to an ImageData object.
+	 */
 	public static ImageData toImageData(BufferedImage image) {
-		int width = image.getWidth();
-		int height = image.getHeight();
-		int depth = getBitDepth(image);
-
-		ImageData data = initNew(width, height, depth);
-
-		switch (image.getType()) {
-			case BufferedImage.TYPE_INT_RGB:
-			case BufferedImage.TYPE_INT_ARGB:
-			case BufferedImage.TYPE_INT_ARGB_PRE: {
-				logger.info("here");
-				int[] src = ((java.awt.image.DataBufferInt) image.getRaster().getDataBuffer()).getData();
-				System.arraycopy(src, 0, data.pixels, 0, src.length);
-				break;
-			}
-
-			case BufferedImage.TYPE_BYTE_GRAY:
-			case BufferedImage.TYPE_BYTE_BINARY: {
-				byte[] src = ((java.awt.image.DataBufferByte) image.getRaster().getDataBuffer()).getData();
-				for (int i = 0; i < src.length; i++) {
-					data.pixels[i] = src[i] & 0xFF; // unsigned conversion
-				}
-				break;
-			}
-
-			case BufferedImage.TYPE_USHORT_GRAY: {
-				short[] src = ((java.awt.image.DataBufferUShort) image.getRaster().getDataBuffer()).getData();
-				for (int i = 0; i < src.length; i++) {
-					data.pixels[i] = src[i] & 0xFFFF;
-				}
-				break;
-			}
-
-			default: {
-				// Fallback: unknown format, fall back to getRGB() conversion
-				int[] rgb = new int[width * height];
-				image.getRGB(0, 0, width, height, rgb, 0, width);
-
-				if (depth == 24) {
-					for (int i = 0; i < rgb.length; i++) {
-						int argb = rgb[i];
-						data.pixels[i] = encodeToInteger(0,
-								(argb >> 16) & 0xFF,
-								(argb >> 8) & 0xFF,
-								argb & 0xFF);
-					}
-				} else if (depth == 32) {
-					System.arraycopy(rgb, 0, data.pixels, 0, rgb.length);
-				} else {
-					// shouldn't happen unless unusual type
-					throw new IllegalArgumentException("Unsupported image type: " + image.getType());
-				}
+		ImageData data = initNew(image.getWidth(), image.getHeight(), getBitDepth(image));
+		for (int x = 0; x < data.width; x++) {
+			for (int y = 0; y < data.height; y++) {
+				int index = x + (y * data.width);
+				int[] value = image.getRaster().getPixel(x, y, (int[]) null);
+				data.pixels[index] = toImageDataPixel(value, data.depth);
 			}
 		}
-
 		return data;
 	}
+
 
 
 	private static int getBitDepth(BufferedImage image) {
