@@ -66,7 +66,7 @@ public class CodecTest {
 			ICodestreamSource src = new ClassPathSourceDescriptor("samples/sample.j2k").create();
 			
 			long start = System.currentTimeMillis();
-			ImageData data = codec.renderImage(0.25f, src);
+			ImageData data = codec.renderImage(10f, src);
 			long duration = System.currentTimeMillis() - start;
 			
 			assertNotNull(data);

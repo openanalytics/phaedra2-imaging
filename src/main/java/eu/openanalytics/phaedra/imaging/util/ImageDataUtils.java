@@ -23,13 +23,19 @@ package eu.openanalytics.phaedra.imaging.util;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 
 import eu.openanalytics.phaedra.imaging.ImageData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.imageio.ImageIO;
 
 /**
  * A collection of utilities for manipulating and converting ImageData objects.
  */
 public class ImageDataUtils {
+	private static final Logger logger = LoggerFactory.getLogger(ImageDataUtils.class);
 
 	/**
 	 * Initialize a new ImageData object of the specified dimensions.
@@ -159,15 +165,31 @@ public class ImageDataUtils {
 	 * Create a copy of an ImageData object with an up- or downscaled resolution.
 	 */
 	public static ImageData scale(ImageData data, int w, int h) {
-		// Convert to a BufferedImage, and use Graphics2D to draw on a resized image. 
+		// Convert to a BufferedImage, and use Graphics2D to draw on a resized image.
+		long start = System.currentTimeMillis();
 		BufferedImage image = toBufferedImage(data);
-		
+		long step_1 = System.currentTimeMillis() - start;
 		BufferedImage resizedImage = new BufferedImage(w, h, image.getType());
+		long step_2 = System.currentTimeMillis() - start - step_1;
 	    Graphics2D graphics2D = resizedImage.createGraphics();
+		long step_3 = System.currentTimeMillis() - start - step_1 - step_2;
 	    graphics2D.drawImage(image, 0, 0, w, h, null);
 	    graphics2D.dispose();
-	    
-	    return toImageData(resizedImage);
+		long step_4 = System.currentTimeMillis() - start - step_1 - step_2 - step_3;
+
+		int[] result = new int[w * h];
+		resizedImage.getRGB(0,0,w,h, result,0,w);
+		ImageData resultData = new ImageData();
+		resultData.width = w;
+		resultData.height = h;
+		resultData.depth = data.depth;
+		resultData.pixels = result;
+
+		long step_5 = System.currentTimeMillis() - start - step_1 - step_2 - step_3 - step_4;
+		logger.info("Image scaling steps (ms): toBI {}, createBI {}, createGraphics {}, draw {}, toimagedata {}", step_1, step_2, step_3, step_4, step_5);
+
+	    return resultData;
+
 	}
 	
 	/**
@@ -219,17 +241,64 @@ public class ImageDataUtils {
 	 * Convert a BufferedImage to an ImageData object.
 	 */
 	public static ImageData toImageData(BufferedImage image) {
-		ImageData data = initNew(image.getWidth(), image.getHeight(), getBitDepth(image));
-		for (int x = 0; x < data.width; x++) {
-		    for (int y = 0; y < data.height; y++) {
-		    	int index = x + (y * data.width);
-		    	int[] value = image.getRaster().getPixel(x, y, (int[]) null);
-		    	data.pixels[index] = toImageDataPixel(value, data.depth);
-		    }
+		int width = image.getWidth();
+		int height = image.getHeight();
+		int depth = getBitDepth(image);
+
+		ImageData data = initNew(width, height, depth);
+
+		switch (image.getType()) {
+			case BufferedImage.TYPE_INT_RGB:
+			case BufferedImage.TYPE_INT_ARGB:
+			case BufferedImage.TYPE_INT_ARGB_PRE: {
+				int[] src = ((java.awt.image.DataBufferInt) image.getRaster().getDataBuffer()).getData();
+				System.arraycopy(src, 0, data.pixels, 0, src.length);
+				break;
+			}
+
+			case BufferedImage.TYPE_BYTE_GRAY:
+			case BufferedImage.TYPE_BYTE_BINARY: {
+				byte[] src = ((java.awt.image.DataBufferByte) image.getRaster().getDataBuffer()).getData();
+				for (int i = 0; i < src.length; i++) {
+					data.pixels[i] = src[i] & 0xFF; // unsigned conversion
+				}
+				break;
+			}
+
+			case BufferedImage.TYPE_USHORT_GRAY: {
+				short[] src = ((java.awt.image.DataBufferUShort) image.getRaster().getDataBuffer()).getData();
+				for (int i = 0; i < src.length; i++) {
+					data.pixels[i] = src[i] & 0xFFFF;
+				}
+				break;
+			}
+
+			default: {
+				// Fallback: unknown format, fall back to getRGB() conversion
+				int[] rgb = new int[width * height];
+				image.getRGB(0, 0, width, height, rgb, 0, width);
+
+				if (depth == 24) {
+					for (int i = 0; i < rgb.length; i++) {
+						int argb = rgb[i];
+						data.pixels[i] = encodeToInteger(0,
+								(argb >> 16) & 0xFF,
+								(argb >> 8) & 0xFF,
+								argb & 0xFF);
+					}
+				} else if (depth == 32) {
+					System.arraycopy(rgb, 0, data.pixels, 0, rgb.length);
+				} else {
+					// shouldn't happen unless unusual type
+					throw new IllegalArgumentException("Unsupported image type: " + image.getType());
+				}
+			}
 		}
+
 		return data;
 	}
-	
+
+
 	private static int getBitDepth(BufferedImage image) {
 		switch (image.getType()) {
 			case BufferedImage.TYPE_BYTE_BINARY: return 1;
