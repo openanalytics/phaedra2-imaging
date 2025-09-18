@@ -116,7 +116,7 @@ public class ImageRenderService {
 		byte[] bytes = toByteArray(resultImage);
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ImageDataLoader.write(resultImage, cfg.format, bos);
-		logger.info("byteOutputStream size: {}",bos.toByteArray().length);
+		logger.info("byteOutputStream size: {}",bytes.length);
 
 
 		long durationMsFormat = System.currentTimeMillis() - startTime;
