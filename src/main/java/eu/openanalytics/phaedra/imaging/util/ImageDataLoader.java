@@ -152,27 +152,24 @@ public class ImageDataLoader {
 		// SWT is about 35% faster compared to ImageIO
 		String codec = System.getProperty("phaedra2.imaging.writer.codec", "swt");
 		boolean is16bitTif = (toSWTFormat(format) == 6 && data.depth == 16);
+		logger.info(format);
 		
 		if (codec.equals("swt") && !is16bitTif) {
+			long startTime = System.currentTimeMillis();
 			// Note: SWT ImageLoader doesn't support 16bit TIF
 			PaletteData palette = (data.depth >= 24) ? new PaletteData(0xFF0000, 0xFF00, 0xFF) : new PaletteData(0xFF, 0xFF, 0xFF);
 			org.eclipse.swt.graphics.ImageData imgData = new org.eclipse.swt.graphics.ImageData(data.width, data.height, data.depth, palette);
 			for (int line = 0; line < data.height; line++) {
 				imgData.setPixels(0, line, data.width, data.pixels, line * data.width);
 			}
-			//imgData.setPixels(0,0, data.width, data.pixels, 0);
-			long startTime = System.currentTimeMillis();
 			ImageLoader loader = new ImageLoader();
-			long step1 = System.currentTimeMillis();
 			loader.data = new org.eclipse.swt.graphics.ImageData[] { imgData };
-			long step2 = System.currentTimeMillis();
 			loader.save(out, toSWTFormat(format));
-			long step3 = System.currentTimeMillis();
-			logger.info("SWT write: create [{} ms], assign [{} ms], save [{} ms]", (step1 - startTime), (step2 - step1), (step3 - step2));
+			long duration = System.currentTimeMillis() - startTime;
+			logger.info("SWT write duration: {} ms", duration);
 		} else {
 			long startTime = System.currentTimeMillis();
 			BufferedImage bi = ImageDataUtils.toBufferedImage(data);
-			long step1 = System.currentTimeMillis();
 			BufferedImage biRGB = bi;
 			if (data.depth != 24) {
 				int w = bi.getWidth();
@@ -182,10 +179,9 @@ public class ImageDataLoader {
 				biRGB = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 				biRGB.setRGB(0, 0, w, h, pixels, 0, w);
 			}
-			long step2 = System.currentTimeMillis();
 			ImageIO.write(biRGB, format, out);
-			long step3 = System.currentTimeMillis();
-			logger.info(String.format("non SWT write: create [%d ms], convert [%d ms], write [%d ms]", (step1 - startTime), (step2 - step1), (step3 - step2)));
+			long duration = System.currentTimeMillis() - startTime;
+			logger.info("non SWT write duration: {} ms", duration);
 		}
 	}
 	

@@ -23,13 +23,107 @@ package eu.openanalytics.phaedra.imaging.util;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import eu.openanalytics.phaedra.imaging.ImageData;
+
+import javax.imageio.ImageIO;
 
 /**
  * A collection of utilities for manipulating and converting ImageData objects.
  */
 public class ImageDataUtils {
+
+
+	public static byte[] toByteArray(ImageData imgData) throws IOException {
+		BufferedImage image;
+
+		switch (imgData.depth) {
+			case 1:
+				// ---- 1-bit binary image ----
+				image = new BufferedImage(
+						imgData.width,
+						imgData.height,
+						BufferedImage.TYPE_BYTE_BINARY
+				);
+				// pixels[] expected: 0 (black) or 1 (white)
+				WritableRaster raster1 = image.getRaster();
+				for (int y = 0; y < imgData.height; y++) {
+					for (int x = 0; x < imgData.width; x++) {
+						raster1.setSample(x, y, 0, imgData.pixels[y * imgData.width + x] & 0x01);
+					}
+				}
+				break;
+
+			case 8:
+				// ---- 8-bit grayscale ----
+				image = new BufferedImage(
+						imgData.width,
+						imgData.height,
+						BufferedImage.TYPE_BYTE_GRAY
+				);
+				WritableRaster raster8 = image.getRaster();
+				for (int y = 0; y < imgData.height; y++) {
+					for (int x = 0; x < imgData.width; x++) {
+						int gray = imgData.pixels[y * imgData.width + x] & 0xFF;
+						raster8.setSample(x, y, 0, gray);
+					}
+				}
+				break;
+
+			case 16:
+				// ---- 16-bit grayscale ----
+				// Java has TYPE_USHORT_GRAY for unsigned 16-bit grayscale
+				image = new BufferedImage(
+						imgData.width,
+						imgData.height,
+						BufferedImage.TYPE_USHORT_GRAY
+				);
+				WritableRaster raster16 = image.getRaster();
+				for (int y = 0; y < imgData.height; y++) {
+					for (int x = 0; x < imgData.width; x++) {
+						int gray16 = imgData.pixels[y * imgData.width + x] & 0xFFFF;
+						raster16.setSample(x, y, 0, gray16);
+					}
+				}
+				break;
+
+			case 24:
+				// ---- 24-bit RGB ----
+				image = new BufferedImage(
+						imgData.width,
+						imgData.height,
+						BufferedImage.TYPE_INT_RGB
+				);
+				// pixels[] expected as 0xRRGGBB or 0xAARRGGBB
+				image.setRGB(0, 0, imgData.width, imgData.height, imgData.pixels, 0, imgData.width);
+				break;
+
+			case 32:
+				// ---- 32-bit ARGB ----
+				image = new BufferedImage(
+						imgData.width,
+						imgData.height,
+						BufferedImage.TYPE_INT_ARGB
+				);
+				// pixels[] expected as 0xAARRGGBB
+				image.setRGB(0, 0, imgData.width, imgData.height, imgData.pixels, 0, imgData.width);
+				break;
+
+			default:
+				throw new IllegalArgumentException("Unsupported depth: " + imgData.depth);
+		}
+
+		// ---- Write to ByteArrayOutputStream ----
+		try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+			if (!ImageIO.write(image, "TIFF", baos)) {
+				throw new IOException("No TIFF writer found — add TwelveMonkeys TIFF plugin.");
+			}
+			return baos.toByteArray();
+		}
+	}
 
 	/**
 	 * Initialize a new ImageData object of the specified dimensions.

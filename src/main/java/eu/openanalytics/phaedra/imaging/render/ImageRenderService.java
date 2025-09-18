@@ -20,8 +20,8 @@
  */
 package eu.openanalytics.phaedra.imaging.render;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +39,10 @@ import eu.openanalytics.phaedra.imaging.jp2k.ICodestreamSource;
 import eu.openanalytics.phaedra.imaging.jp2k.ICodestreamSourceDescriptor;
 import eu.openanalytics.phaedra.imaging.util.ImageDataLoader;
 import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
+
+import javax.imageio.ImageIO;
+
+import static eu.openanalytics.phaedra.imaging.util.ImageDataUtils.toByteArray;
 
 /**
  * A service for rendering composite images, where each image channel
@@ -109,6 +113,7 @@ public class ImageRenderService {
 		// Convert the result image to the desired image format.
 
 		logger.info("resultImage size: {}",resultImage.pixels.length);
+		byte[] bytes = toByteArray(resultImage);
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ImageDataLoader.write(resultImage, cfg.format, bos);
 		logger.info("byteOutputStream size: {}",bos.toByteArray().length);
@@ -117,7 +122,7 @@ public class ImageRenderService {
 		long durationMsFormat = System.currentTimeMillis() - startTime;
 
 		logger.info("Rendered {} channels to {}x{} pixels in {}: decode [{} ms], blend [{} ms], format [{} ms]", sources.length, resultImage.width, resultImage.height, cfg.format, durationMsDecode, durationMsBlend, durationMsFormat);
-		return bos.toByteArray();
+		return bytes;
 	}
 
 	@FunctionalInterface
