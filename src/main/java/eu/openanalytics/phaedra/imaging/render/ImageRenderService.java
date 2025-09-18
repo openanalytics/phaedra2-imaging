@@ -47,29 +47,29 @@ public class ImageRenderService {
 
 	private CodecPool codecPool;
 	private ExecutorService executor;
-	
+
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-	
+
 	public ImageRenderService() {
 		int maxPoolSize = Integer.parseInt(System.getProperty("phaedra2.imaging.renderservice.codec.pool.size", "8"));
 		codecPool = new CodecPool(maxPoolSize);
 		executor = Executors.newFixedThreadPool(maxPoolSize);
 	}
-	
+
 	public void close() {
 		if (codecPool != null) codecPool.close();
 		if (executor != null) executor.shutdownNow();
 	}
-	
+
 	public byte[] renderImage(ICodestreamSourceDescriptor[] sources, ImageRenderConfig cfg) throws IOException {
-		
+
 		Assert.notEmpty(sources, "At least one codestream source must be specified");
 		Assert.notNull(cfg, "Image render config must be specified");
 		Assert.notEmpty(cfg.channelConfigs, "Image render config must contain at least one channel config");
 		Assert.isTrue(sources.length == cfg.channelConfigs.length, "Number of codestream sources must match number of channel configs");
-		
+
 		long startTime = System.currentTimeMillis();
-		
+
 		// Render channels in parallel.
 		List<Future<ImageData>> dataFutures = new ArrayList<>();
 		for (int i = 0; i < sources.length; i++) {
@@ -79,12 +79,12 @@ public class ImageRenderService {
 				if (cfg.region == null) {
 					return codec.renderImage(cfg.scale, source);
 				} else {
-					return codec.renderImageRegion(cfg.scale, cfg.region, source);	
+					return codec.renderImageRegion(cfg.scale, cfg.region, source);
 				}
 			});
 			dataFutures.add(dataFuture);
 		}
-		
+
 		// Collect all rendered channels.
 		ImageData[] datas = new ImageData[dataFutures.size()];
 		for (int i = 0; i < datas.length; i++) {
@@ -94,38 +94,38 @@ public class ImageRenderService {
 				throw new IOException("Error rendering image", e);
 			}
 		}
-		
+
 		long durationMsDecode = System.currentTimeMillis() - startTime;
 		startTime = System.currentTimeMillis();
-		
+
 		// Blend channels into a single result image.
 		ImageData resultImage = new ChannelBlender().blend(datas, cfg);
 		ImageDataUtils.applyGamma(resultImage, cfg.gamma);
-		
+
 		long durationMsBlend = System.currentTimeMillis() - startTime;
 		startTime = System.currentTimeMillis();
-		
+
 		// Convert the result image to the desired image format.
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ImageDataLoader.write(resultImage, cfg.format, bos);
-		
+
 		long durationMsFormat = System.currentTimeMillis() - startTime;
-		
-		logger.debug(String.format("Rendered %d channels to %dx%d pixels in %s: decode [%d ms], blend [%d ms], format [%d ms]", sources.length, resultImage.width, resultImage.height, cfg.format, durationMsDecode, durationMsBlend, durationMsFormat));
+
+		logger.info("Rendered {} channels to {}x{} pixels in {}: decode [{} ms], blend [{} ms], format [{} ms]", sources.length, resultImage.width, resultImage.height, cfg.format, durationMsDecode, durationMsBlend, durationMsFormat);
 		return bos.toByteArray();
 	}
-	
+
 	@FunctionalInterface
 	private static interface CodecOperation<T> {
 		public T apply(ICodec codec) throws IOException;
 	}
-	
+
 	private <T> Future<T> useCodecAsync(CodecOperation<T> operation) throws IOException {
 		return executor.submit(() -> {
 			return useCodec(operation);
 		});
 	}
-	
+
 	private <T> T useCodec(CodecOperation<T> operation) throws IOException {
 		try {
 			ICodec codec = codecPool.borrowObject();
