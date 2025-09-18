@@ -157,10 +157,10 @@ public class ImageDataLoader {
 			// Note: SWT ImageLoader doesn't support 16bit TIF
 			PaletteData palette = (data.depth >= 24) ? new PaletteData(0xFF0000, 0xFF00, 0xFF) : new PaletteData(0xFF, 0xFF, 0xFF);
 			org.eclipse.swt.graphics.ImageData imgData = new org.eclipse.swt.graphics.ImageData(data.width, data.height, data.depth, palette);
-			/*for (int line = 0; line < data.height; line++) {
+			for (int line = 0; line < data.height; line++) {
 				imgData.setPixels(0, line, data.width, data.pixels, line * data.width);
-			}*/
-			imgData.setPixels(0,0, data.width, data.pixels, 0);
+			}
+			//imgData.setPixels(0,0, data.width, data.pixels, 0);
 			long startTime = System.currentTimeMillis();
 			ImageLoader loader = new ImageLoader();
 			long step1 = System.currentTimeMillis();

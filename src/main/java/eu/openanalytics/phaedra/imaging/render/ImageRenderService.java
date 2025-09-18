@@ -23,6 +23,7 @@ package eu.openanalytics.phaedra.imaging.render;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -106,8 +107,12 @@ public class ImageRenderService {
 		startTime = System.currentTimeMillis();
 
 		// Convert the result image to the desired image format.
+
+		logger.info("resultImage size: {}",resultImage.pixels.length);
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ImageDataLoader.write(resultImage, cfg.format, bos);
+		logger.info("byteOutputStream size: {}",bos.toByteArray().length);
+
 
 		long durationMsFormat = System.currentTimeMillis() - startTime;
 
