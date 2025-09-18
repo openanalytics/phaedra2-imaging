@@ -38,6 +38,8 @@ import javax.imageio.ImageIO;
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.PaletteData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
 
 import eu.openanalytics.phaedra.imaging.ImageData;
@@ -48,6 +50,7 @@ import loci.formats.ImageReader;
 import loci.formats.in.TiffReader;
 
 public class ImageDataLoader {
+	private static final Logger logger = LoggerFactory.getLogger(ImageDataLoader.class);
 
 	public static ImageData load(String path) throws IOException {
 		Supplier<ImageData> bioLoader = () -> {
@@ -152,16 +155,23 @@ public class ImageDataLoader {
 		
 		if (codec.equals("swt") && !is16bitTif) {
 			// Note: SWT ImageLoader doesn't support 16bit TIF
+			long startTime = System.currentTimeMillis();
 			PaletteData palette = (data.depth >= 24) ? new PaletteData(0xFF0000, 0xFF00, 0xFF) : new PaletteData(0xFF, 0xFF, 0xFF);
 			org.eclipse.swt.graphics.ImageData imgData = new org.eclipse.swt.graphics.ImageData(data.width, data.height, data.depth, palette);
+			long step1 = System.currentTimeMillis();
 			for (int line = 0; line < data.height; line++) {
 				imgData.setPixels(0, line, data.width, data.pixels, line * data.width);
 			}
+			long step2 = System.currentTimeMillis();
 			ImageLoader loader = new ImageLoader();
 			loader.data = new org.eclipse.swt.graphics.ImageData[] { imgData };
 			loader.save(out, toSWTFormat(format));
+			long step3 = System.currentTimeMillis();
+			logger.info(String.format("SWT write: prep [%d ms], setPixels [%d ms], save [%d ms]", (step1 - startTime), (step2 - step1), (step3 - step2)));
 		} else {
+			long startTime = System.currentTimeMillis();
 			BufferedImage bi = ImageDataUtils.toBufferedImage(data);
+			long step1 = System.currentTimeMillis();
 			BufferedImage biRGB = bi;
 			if (data.depth != 24) {
 				int w = bi.getWidth();
@@ -171,7 +181,10 @@ public class ImageDataLoader {
 				biRGB = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 				biRGB.setRGB(0, 0, w, h, pixels, 0, w);
 			}
+			long step2 = System.currentTimeMillis();
 			ImageIO.write(biRGB, format, out);
+			long step3 = System.currentTimeMillis();
+			logger.info(String.format("non SWT write: create [%d ms], convert [%d ms], write [%d ms]", (step1 - startTime), (step2 - step1), (step3 - step2)));
 		}
 	}
 	
