@@ -113,16 +113,16 @@ public class ImageRenderService {
 		// Convert the result image to the desired image format.
 
 		logger.info("resultImage size: {}",resultImage.pixels.length);
-		byte[] bytes = toByteArray(resultImage);
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		ImageDataLoader.write(resultImage, cfg.format, bos);
-		logger.info("byteOutputStream size: {}",bytes.length);
+		BufferedOutputStream buf = new BufferedOutputStream(bos, 8192);
+		ImageDataLoader.write(resultImage, cfg.format, buf);
+		logger.info("byteOutputStream size: {}",bos.toByteArray().length);
 
 
 		long durationMsFormat = System.currentTimeMillis() - startTime;
 
 		logger.info("Rendered {} channels to {}x{} pixels in {}: decode [{} ms], blend [{} ms], format [{} ms]", sources.length, resultImage.width, resultImage.height, cfg.format, durationMsDecode, durationMsBlend, durationMsFormat);
-		return bytes;
+		return bos.toByteArray();
 	}
 
 	@FunctionalInterface
