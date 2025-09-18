@@ -150,7 +150,7 @@ public class ImageDataLoader {
 	
 	public static void write(ImageData data, String format, OutputStream out) throws IOException {
 		// SWT is about 35% faster compared to ImageIO
-		String codec = System.getProperty("phaedra2.imaging.writer.codec", "swt");
+		String codec = System.getProperty("phaedra2.imaging.writer.codec", "noswt");
 		boolean is16bitTif = (toSWTFormat(format) == 6 && data.depth == 16);
 		logger.info(format);
 		

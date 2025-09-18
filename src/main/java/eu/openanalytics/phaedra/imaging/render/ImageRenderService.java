@@ -20,7 +20,8 @@
  */
 package eu.openanalytics.phaedra.imaging.render;
 
-import java.awt.image.BufferedImage;
+import java.awt.*;
+import java.awt.image.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +43,6 @@ import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
 
 import javax.imageio.ImageIO;
 
-import static eu.openanalytics.phaedra.imaging.util.ImageDataUtils.toByteArray;
 
 /**
  * A service for rendering composite images, where each image channel
@@ -111,13 +111,8 @@ public class ImageRenderService {
 		startTime = System.currentTimeMillis();
 
 		// Convert the result image to the desired image format.
-
-		logger.info("resultImage size: {}",resultImage.pixels.length);
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		BufferedOutputStream buf = new BufferedOutputStream(bos, 8192);
-		ImageDataLoader.write(resultImage, cfg.format, buf);
-		logger.info("byteOutputStream size: {}",bos.toByteArray().length);
-
+		ImageDataLoader.write(resultImage, cfg.format, bos);
 
 		long durationMsFormat = System.currentTimeMillis() - startTime;
 
