@@ -155,19 +155,19 @@ public class ImageDataLoader {
 		
 		if (codec.equals("swt") && !is16bitTif) {
 			// Note: SWT ImageLoader doesn't support 16bit TIF
-			long startTime = System.currentTimeMillis();
 			PaletteData palette = (data.depth >= 24) ? new PaletteData(0xFF0000, 0xFF00, 0xFF) : new PaletteData(0xFF, 0xFF, 0xFF);
 			org.eclipse.swt.graphics.ImageData imgData = new org.eclipse.swt.graphics.ImageData(data.width, data.height, data.depth, palette);
-			long step1 = System.currentTimeMillis();
 			for (int line = 0; line < data.height; line++) {
 				imgData.setPixels(0, line, data.width, data.pixels, line * data.width);
 			}
-			long step2 = System.currentTimeMillis();
+			long startTime = System.currentTimeMillis();
 			ImageLoader loader = new ImageLoader();
+			long step1 = System.currentTimeMillis();
 			loader.data = new org.eclipse.swt.graphics.ImageData[] { imgData };
+			long step2 = System.currentTimeMillis();
 			loader.save(out, toSWTFormat(format));
 			long step3 = System.currentTimeMillis();
-			logger.info(String.format("SWT write: prep [%d ms], setPixels [%d ms], save [%d ms]", (step1 - startTime), (step2 - step1), (step3 - step2)));
+			logger.info("SWT write: create [{} ms], assign [{} ms], save [{} ms]", (step1 - startTime), (step2 - step1), (step3 - step2));
 		} else {
 			long startTime = System.currentTimeMillis();
 			BufferedImage bi = ImageDataUtils.toBufferedImage(data);
