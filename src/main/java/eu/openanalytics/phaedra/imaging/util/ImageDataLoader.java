@@ -50,6 +50,7 @@ import loci.formats.ImageReader;
 import loci.formats.in.TiffReader;
 
 public class ImageDataLoader {
+	private static final Logger logger = LoggerFactory.getLogger(ImageDataLoader.class);
 
 	public static ImageData load(String path) throws IOException {
 		Supplier<ImageData> bioLoader = () -> {
@@ -148,10 +149,10 @@ public class ImageDataLoader {
 	}
 
 	public static void write(ImageData data, String format, OutputStream out) throws IOException {
-		// SWT is about 35% faster compared to ImageIO
 		BufferedImage bi = ImageDataUtils.toBufferedImage(data);
 		BufferedImage biRGB = bi;
 		if (data.depth != 24) {
+			logger.info("here");
 			int w = bi.getWidth();
 			int h = bi.getHeight();
 			int[] pixels = new int[w * h];
