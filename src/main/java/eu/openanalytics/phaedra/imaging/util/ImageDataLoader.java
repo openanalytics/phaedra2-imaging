@@ -50,7 +50,6 @@ import loci.formats.ImageReader;
 import loci.formats.in.TiffReader;
 
 public class ImageDataLoader {
-	private static final Logger logger = LoggerFactory.getLogger(ImageDataLoader.class);
 
 	public static ImageData load(String path) throws IOException {
 		Supplier<ImageData> bioLoader = () -> {
@@ -150,48 +149,16 @@ public class ImageDataLoader {
 
 	public static void write(ImageData data, String format, OutputStream out) throws IOException {
 		// SWT is about 35% faster compared to ImageIO
-		String codec = System.getProperty("phaedra2.imaging.writer.codec", "nswt");
-		boolean is16bitTif = (toSWTFormat(format) == 6 && data.depth == 16);
-		logger.info(format);
-
-		if (codec.equals("swt") && !is16bitTif) {
-			// Note: SWT ImageLoader doesn't support 16bit TIF
-			PaletteData palette = (data.depth >= 24) ? new PaletteData(0xFF0000, 0xFF00, 0xFF) : new PaletteData(0xFF, 0xFF, 0xFF);
-			org.eclipse.swt.graphics.ImageData imgData = new org.eclipse.swt.graphics.ImageData(data.width, data.height, data.depth, palette);
-			for (int line = 0; line < data.height; line++) {
-				imgData.setPixels(0, line, data.width, data.pixels, line * data.width);
-			}
-			ImageLoader loader = new ImageLoader();
-			loader.data = new org.eclipse.swt.graphics.ImageData[] { imgData };
-			long startTime = System.currentTimeMillis();
-			loader.save(out, toSWTFormat(format));
-			long duration = System.currentTimeMillis() - startTime;
-			logger.info("SWT write duration: {} ms", duration);
-		} else {
-			long startTime = System.currentTimeMillis();
-			BufferedImage bi = ImageDataUtils.toBufferedImage(data);
-			BufferedImage biRGB = bi;
-			if (data.depth != 24) {
-				int w = bi.getWidth();
-				int h = bi.getHeight();
-				int[] pixels = new int[w * h];
-				bi.getRGB(0, 0, w, h, pixels, 0, w);
-				biRGB = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-				biRGB.setRGB(0, 0, w, h, pixels, 0, w);
-			}
-			long step1 = System.currentTimeMillis() - startTime;
-			ImageIO.write(biRGB, format, out);
-			long step2 = System.currentTimeMillis() - startTime - step1;
-			logger.info("ImageIO write duration: {} ms (convert: {} ms, write: {} ms)", step1 + step2, step1, step2);
+		BufferedImage bi = ImageDataUtils.toBufferedImage(data);
+		BufferedImage biRGB = bi;
+		if (data.depth != 24) {
+			int w = bi.getWidth();
+			int h = bi.getHeight();
+			int[] pixels = new int[w * h];
+			bi.getRGB(0, 0, w, h, pixels, 0, w);
+			biRGB = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+			biRGB.setRGB(0, 0, w, h, pixels, 0, w);
 		}
-	}
-
-	private static int toSWTFormat(String format) {
-		if (format == null) return 4;
-		format = format.toLowerCase().trim();
-		if (format.equals("jpg") || format.equals("jpeg")) return 4;
-		if (format.equals("png")) return 5;
-		if (format.equals("tif") || format.equals("tiff")) return 6;
-		return 4;
+		ImageIO.write(biRGB, format, out);
 	}
 }
