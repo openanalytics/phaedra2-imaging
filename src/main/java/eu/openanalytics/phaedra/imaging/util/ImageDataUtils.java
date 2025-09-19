@@ -23,8 +23,12 @@ package eu.openanalytics.phaedra.imaging.util;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferInt;
+import java.awt.image.DataBufferUShort;
 
 import eu.openanalytics.phaedra.imaging.ImageData;
+import org.slf4j.Logger;
 
 
 /**
@@ -174,16 +178,54 @@ public class ImageDataUtils {
 	 * Convert an ImageData object to a BufferedImage.
 	 */
 	public static BufferedImage toBufferedImage(ImageData data) {
-		BufferedImage image = new BufferedImage(data.width, data.height, getBufferedImageTypeForDepth(data.depth));
-		for (int x = 0; x < data.width; x++) {
-			for (int y = 0; y < data.height; y++) {
-				int index = x + (y * data.width);
-				int value = data.pixels[index];
-				image.getRaster().setPixel(x, y, toBufferedImagePixel(value, data.depth));
+		int w = data.width;
+		int h = data.height;
+
+		switch (data.depth) {
+			case 8: { // grayscale
+				BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_GRAY);
+				byte[] buf = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
+				for (int i = 0; i < w * h; i++) {
+					buf[i] = (byte) data.pixels[i];
+				}
+				return img;
+			}
+
+			case 16: { // 16-bit grayscale -> scale down to 8-bit
+				BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_USHORT_GRAY);
+				short[] buf = ((DataBufferUShort) img.getRaster().getDataBuffer()).getData();
+				for (int i = 0; i < w * h; i++) {
+					buf[i] = (short) data.pixels[i]; // if already 16-bit grayscale
+				}
+				return img;
+			}
+
+			case 24:
+			case 32: { // RGB
+				BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+				int[] buf = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
+
+				// assuming data.pixels is packed RGB (0xRRGGBB or 0xAARRGGBB)
+				System.arraycopy(data.pixels, 0, buf, 0, w * h);
+
+				return img;
+			}
+
+			default: {
+				// fallback: generic slower path
+				BufferedImage image = new BufferedImage(data.width, data.height, getBufferedImageTypeForDepth(data.depth));
+				for (int x = 0; x < data.width; x++) {
+					for (int y = 0; y < data.height; y++) {
+						int index = x + (y * data.width);
+						int value = data.pixels[index];
+						image.getRaster().setPixel(x, y, toBufferedImagePixel(value, data.depth));
+					}
+				}
+				return image;
 			}
 		}
-		return image;
 	}
+
 
 	private static int getBufferedImageTypeForDepth(int depth) {
 		switch (depth) {

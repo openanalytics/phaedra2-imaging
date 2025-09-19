@@ -150,12 +150,11 @@ public class ImageDataLoader {
 
 	public static void write(ImageData data, String format, OutputStream out) throws IOException {
 		// SWT is about 35% faster compared to ImageIO
-		String codec = System.getProperty("phaedra2.imaging.writer.codec", "swt");
+		String codec = System.getProperty("phaedra2.imaging.writer.codec", "nswt");
 		boolean is16bitTif = (toSWTFormat(format) == 6 && data.depth == 16);
 		logger.info(format);
 
 		if (codec.equals("swt") && !is16bitTif) {
-			long startTime = System.currentTimeMillis();
 			// Note: SWT ImageLoader doesn't support 16bit TIF
 			PaletteData palette = (data.depth >= 24) ? new PaletteData(0xFF0000, 0xFF00, 0xFF) : new PaletteData(0xFF, 0xFF, 0xFF);
 			org.eclipse.swt.graphics.ImageData imgData = new org.eclipse.swt.graphics.ImageData(data.width, data.height, data.depth, palette);
@@ -164,6 +163,7 @@ public class ImageDataLoader {
 			}
 			ImageLoader loader = new ImageLoader();
 			loader.data = new org.eclipse.swt.graphics.ImageData[] { imgData };
+			long startTime = System.currentTimeMillis();
 			loader.save(out, toSWTFormat(format));
 			long duration = System.currentTimeMillis() - startTime;
 			logger.info("SWT write duration: {} ms", duration);
@@ -179,9 +179,10 @@ public class ImageDataLoader {
 				biRGB = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 				biRGB.setRGB(0, 0, w, h, pixels, 0, w);
 			}
+			long step1 = System.currentTimeMillis() - startTime;
 			ImageIO.write(biRGB, format, out);
-			long duration = System.currentTimeMillis() - startTime;
-			logger.info("non SWT write duration: {} ms", duration);
+			long step2 = System.currentTimeMillis() - startTime - step1;
+			logger.info("ImageIO write duration: {} ms (convert: {} ms, write: {} ms)", step1 + step2, step1, step2);
 		}
 	}
 
