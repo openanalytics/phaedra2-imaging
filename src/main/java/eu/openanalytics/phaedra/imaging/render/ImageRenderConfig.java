@@ -52,7 +52,7 @@ public class ImageRenderConfig {
 	}
 
 	public void fillDefaults() {
-		format = "iff";
+		format = "jpg";
 		gamma = 1.0f;
 		scale = 1.0f;
 		if (channelConfigs != null) {

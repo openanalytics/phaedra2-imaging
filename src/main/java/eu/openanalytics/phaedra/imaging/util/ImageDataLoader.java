@@ -68,7 +68,7 @@ public class ImageDataLoader {
 				throw new RuntimeException(e);
 			}
 		};
-		
+
 		ImageData data = null;
 		String codecId = System.getProperty("phaedra2.imaging.codec", "bioformats");
 		if (codecId.equalsIgnoreCase("bioformats")) {
@@ -78,56 +78,56 @@ public class ImageDataLoader {
 			data = imageIOLoader.get();
 			if (data == null) data = bioLoader.get();
 		}
-		
+
 		return data;
 	}
-	
+
 	public static ImageData load(InputStream input) throws IOException {
 		return load(input, null);
 	}
-	
+
 	public static ImageData load(InputStream input, String extension) throws IOException {
 		BufferedInputStream bufferedInput = new BufferedInputStream(input);
 		bufferedInput.mark(Integer.MAX_VALUE);
-		
+
 		BufferedImage image = ImageIO.read(bufferedInput);
 		if (image == null) {
 			// BioFormats requires reading from a file, so copy the image data into a temp file.
 			if (extension == null) extension = "bin";
 			Path path = Files.createTempFile("ph2-img-", "." + extension);
-			
+
 			bufferedInput.reset();
 			FileCopyUtils.copy(bufferedInput, new FileOutputStream(path.toString()));
-			
+
 			ImageData data = loadWithBioFormats(path.toString());
 			Files.delete(path);
 			return data;
 		}
 		else return ImageDataUtils.toImageData(image);
 	}
-	
+
 	private static ImageData loadWithBioFormats(String path) throws IOException {
 		IFormatReader reader = null;
-		
+
 		// Shortcut for TIFF to avoid initializing the whole reader registry.
 		String fileExt = FilenameUtils.getExtension(path);
 		String[] tiffExtensions = { "tif", "tiff", "flex" };
 		if (Arrays.stream(tiffExtensions).anyMatch(e -> e.equals(fileExt))) reader = new TiffReader();
 		else reader = new ImageReader();
-		
+
 		try {
 			reader.setGroupFiles(false);
 			reader.setId(path);
-			
+
 			ImageData data = ImageDataUtils.initNew(reader.getSizeX(), reader.getSizeY(), reader.getBitsPerPixel());
-			
+
 			boolean le = true; // Access endianness only if needed.
 			if (data.depth > 8) {
 				@SuppressWarnings("deprecation")
 				List<CoreMetadata> metadata = reader.getCoreMetadataList();
 				if (!metadata.isEmpty()) le = metadata.get(0).littleEndian;
 			}
-			
+
 			byte[] img = reader.openBytes(0);
 			int bytesPerPixel = Math.max(1, data.depth/8);
 			for (int i=0; i < data.pixels.length; i++) {
@@ -147,13 +147,13 @@ public class ImageDataLoader {
 			reader.close();
 		}
 	}
-	
+
 	public static void write(ImageData data, String format, OutputStream out) throws IOException {
 		// SWT is about 35% faster compared to ImageIO
-		String codec = System.getProperty("phaedra2.imaging.writer.codec", "noswt");
+		String codec = System.getProperty("phaedra2.imaging.writer.codec", "swt");
 		boolean is16bitTif = (toSWTFormat(format) == 6 && data.depth == 16);
 		logger.info(format);
-		
+
 		if (codec.equals("swt") && !is16bitTif) {
 			long startTime = System.currentTimeMillis();
 			// Note: SWT ImageLoader doesn't support 16bit TIF
@@ -184,13 +184,13 @@ public class ImageDataLoader {
 			logger.info("non SWT write duration: {} ms", duration);
 		}
 	}
-	
+
 	private static int toSWTFormat(String format) {
 		if (format == null) return 4;
 		format = format.toLowerCase().trim();
 		if (format.equals("jpg") || format.equals("jpeg")) return 4;
 		if (format.equals("png")) return 5;
-		if (format.equals("tif") || format.equals("tiff")) return 6; 
+		if (format.equals("tif") || format.equals("tiff")) return 6;
 		return 4;
 	}
 }
