@@ -18,6 +18,7 @@
  * You should have received a copy of the Apache License
  * along with this program.  If not, see <http://www.apache.org/licenses/>
  */
+
 package org.openjpeg;
 
 public class OpenJPEGEncoder {

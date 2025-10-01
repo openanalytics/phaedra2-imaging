@@ -30,6 +30,8 @@ import org.openjpeg.ImagePixels;
 import org.openjpeg.JavaByteSource;
 import org.openjpeg.OpenJPEGDecoder;
 import org.openjpeg.OpenJPEGEncoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import eu.openanalytics.phaedra.imaging.ImageData;
 import eu.openanalytics.phaedra.imaging.jp2k.CompressionConfig;
@@ -50,6 +52,8 @@ public class OpenJPEGCodec implements ICodec {
 	private int bgColor = 0x0;
 	
 	private OpenJPEGDecoder decoder;
+
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 	
 	@Override
 	public void open() throws IOException {
@@ -165,13 +169,14 @@ public class OpenJPEGCodec implements ICodec {
 	
 	private ImageData decode(ICodestreamSource source, int[] fullSize, float scale, Rectangle region) {
 		int discardLevels = calculateDiscardLevels(fullSize, scale);
-		
+		int threads = Integer.parseInt(System.getProperty("phaedra2.imaging.openjpeg.decode.threads", "1"));
+		logger.info("Threads used for OpenJPEG decoding: {}", threads);
 		int[] regionPoints = null;
 		if (region != null) {
 			regionPoints = new int[] { region.x, region.y, region.x + region.width, region.y + region.height };
 		}
 		
-		ImagePixels img = decoder.decode(asByteSource(source), discardLevels, regionPoints);
+		ImagePixels img = decoder.decode(asByteSource(source), discardLevels, regionPoints, threads);
 		ImageData data = createImageData(img.width, img.height, img.depth);
 		data.pixels = img.pixels;
 		
@@ -184,7 +189,7 @@ public class OpenJPEGCodec implements ICodec {
 		if (expectedSize[0] != img.width || expectedSize[1] != img.height) {
 			data = ImageDataUtils.scale(data, expectedSize[0], expectedSize[1]);	
 		}
-		
+
 		return data;
 	}
 
