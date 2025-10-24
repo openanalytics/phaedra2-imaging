@@ -112,7 +112,7 @@ public class OpenJPEGCodec implements ICodec {
 			// Decode while maintaining aspect ratio.
 			int[] fullSize = decoder.getSize(byteSource);
 			float scale = Math.min(((float) w) / fullSize[0], ((float) h) / fullSize[1]);
-			ImageData decodedImage = decode(source, fullSize, scale, null);
+			ImageData decodedImage = decode(byteSource, fullSize, scale, null);
 			
 			if (decodedImage.width == w && decodedImage.height == h) {
 				return decodedImage;
@@ -133,8 +133,7 @@ public class OpenJPEGCodec implements ICodec {
         JavaByteSource byteSource = asByteSource(source);
 		try {
 			int[] fullSize = decoder.getSize(byteSource);
-            byteSource.close();
-			return decode(source, fullSize, scale, null);
+			return decode(byteSource, fullSize, scale, null);
 		} finally {
             byteSource.close();
 			lock.unlock();
@@ -150,7 +149,7 @@ public class OpenJPEGCodec implements ICodec {
 			// If the region falls outside the image, render only the part within the image.
 			Rectangle clippedRegion = region.intersect(Rectangle.of(0, 0, fullSize[0], fullSize[1]));
 			if (clippedRegion.width == 0 || clippedRegion.height == 0) throw new RuntimeException("Cannot render image region: " + clippedRegion); 
-			return decode(source, fullSize, scale, clippedRegion);
+			return decode(byteSource, fullSize, scale, clippedRegion);
 		} finally {
             byteSource.close();
 			lock.unlock();
@@ -178,35 +177,29 @@ public class OpenJPEGCodec implements ICodec {
 		encoder.encode(image, outputFile, parameters);
 	}
 	
-	private ImageData decode(ICodestreamSource source, int[] fullSize, float scale, Rectangle region) {
-        JavaByteSource byteSource = asByteSource(source);
-        try {
-            int discardLevels = calculateDiscardLevels(fullSize, scale);
-            int threads = Integer.parseInt(System.getProperty("phaedra2.imaging.openjpeg.decode.threads", "1"));
-            logger.info("Threads used for OpenJPEG decoding: {}", threads);
-            int[] regionPoints = null;
-            if (region != null) {
-                regionPoints = new int[] { region.x, region.y, region.x + region.width, region.y + region.height };
-            }
-            ImagePixels img = decoder.decode(byteSource, discardLevels, regionPoints, threads);
-            ImageData data = createImageData(img.width, img.height, img.depth);
-            data.pixels = img.pixels;
+	private ImageData decode(JavaByteSource source, int[] fullSize, float scale, Rectangle region) {
+        int discardLevels = calculateDiscardLevels(fullSize, scale);
+        int threads = Integer.parseInt(System.getProperty("phaedra2.imaging.openjpeg.decode.threads", "1"));
+        logger.info("Threads used for OpenJPEG decoding: {}", threads);
+        int[] regionPoints = null;
+        if (region != null) {
+            regionPoints = new int[] { region.x, region.y, region.x + region.width, region.y + region.height };
+        }
+        ImagePixels img = decoder.decode(source, discardLevels, regionPoints, threads);
+        ImageData data = createImageData(img.width, img.height, img.depth);
+        data.pixels = img.pixels;
 
-            // If the requested scale was not an exact pow2 scale, perform additional scaling.
-            int[] expectedSize = { (int) Math.ceil(fullSize[0] * scale), (int) Math.ceil(fullSize[1] * scale) };
-            if (region != null) {
-                expectedSize[0] = (int) Math.ceil(region.width * scale);
-                expectedSize[1] = (int) Math.ceil(region.height * scale);
-            }
-            if (expectedSize[0] != img.width || expectedSize[1] != img.height) {
-                data = ImageDataUtils.scale(data, expectedSize[0], expectedSize[1]);
-            }
-
-            return data;
-        } finally {
-            byteSource.close();
+        // If the requested scale was not an exact pow2 scale, perform additional scaling.
+        int[] expectedSize = { (int) Math.ceil(fullSize[0] * scale), (int) Math.ceil(fullSize[1] * scale) };
+        if (region != null) {
+            expectedSize[0] = (int) Math.ceil(region.width * scale);
+            expectedSize[1] = (int) Math.ceil(region.height * scale);
+        }
+        if (expectedSize[0] != img.width || expectedSize[1] != img.height) {
+            data = ImageDataUtils.scale(data, expectedSize[0], expectedSize[1]);
         }
 
+        return data;
 	}
 
 	private int calculateDiscardLevels(int[] fullSize, float scale) {
