@@ -81,12 +81,12 @@ public class OpenJPEGCodec implements ICodec {
 	@Override
 	public int[] getDimensions(ICodestreamSource source) throws IOException {
 		lock.lock();
+        JavaByteSource byteSource = asByteSource(source);
 		try {
-            JavaByteSource byteSource = asByteSource(source);
             int[] size = decoder.getSize(byteSource);;
-            byteSource.close();
 			return Arrays.copyOf(size, 2);
 		} finally {
+            byteSource.close();
 			lock.unlock();
 		}
 	}
@@ -94,12 +94,12 @@ public class OpenJPEGCodec implements ICodec {
 	@Override
 	public int getBitDepth(ICodestreamSource source) throws IOException {
 		lock.lock();
+        JavaByteSource byteSource = asByteSource(source);
 		try {
-            JavaByteSource byteSource = asByteSource(source);
 			int[] size = decoder.getSize(byteSource);
-            byteSource.close();
 			return size[2];
 		} finally {
+            byteSource.close();
 			lock.unlock();
 		}
 	}
@@ -107,11 +107,10 @@ public class OpenJPEGCodec implements ICodec {
 	@Override
 	public ImageData renderImage(int w, int h, ICodestreamSource source) throws IOException {
 		lock.lock();
+        JavaByteSource byteSource = asByteSource(source);
 		try {
 			// Decode while maintaining aspect ratio.
-            JavaByteSource byteSource = asByteSource(source);
 			int[] fullSize = decoder.getSize(byteSource);
-            byteSource.close();
 			float scale = Math.min(((float) w) / fullSize[0], ((float) h) / fullSize[1]);
 			ImageData decodedImage = decode(source, fullSize, scale, null);
 			
@@ -123,6 +122,7 @@ public class OpenJPEGCodec implements ICodec {
 				return ImageDataUtils.scale(decodedImage, w, h);
 			}
 		} finally {
+            byteSource.close();
 			lock.unlock();
 		}
 	}
@@ -130,12 +130,13 @@ public class OpenJPEGCodec implements ICodec {
 	@Override
 	public ImageData renderImage(float scale, ICodestreamSource source) throws IOException {
 		lock.lock();
+        JavaByteSource byteSource = asByteSource(source);
 		try {
-            JavaByteSource byteSource = asByteSource(source);
 			int[] fullSize = decoder.getSize(byteSource);
             byteSource.close();
 			return decode(source, fullSize, scale, null);
 		} finally {
+            byteSource.close();
 			lock.unlock();
 		}
 	}
@@ -143,15 +144,15 @@ public class OpenJPEGCodec implements ICodec {
 	@Override
 	public ImageData renderImageRegion(float scale, Rectangle region, ICodestreamSource source) throws IOException {
 		lock.lock();
+        JavaByteSource byteSource = asByteSource(source);
 		try {
-            JavaByteSource byteSource = asByteSource(source);
 			int[] fullSize = decoder.getSize(byteSource);
-            byteSource.close();
 			// If the region falls outside the image, render only the part within the image.
 			Rectangle clippedRegion = region.intersect(Rectangle.of(0, 0, fullSize[0], fullSize[1]));
 			if (clippedRegion.width == 0 || clippedRegion.height == 0) throw new RuntimeException("Cannot render image region: " + clippedRegion); 
 			return decode(source, fullSize, scale, clippedRegion);
 		} finally {
+            byteSource.close();
 			lock.unlock();
 		}
 	}
@@ -178,30 +179,34 @@ public class OpenJPEGCodec implements ICodec {
 	}
 	
 	private ImageData decode(ICodestreamSource source, int[] fullSize, float scale, Rectangle region) {
-		int discardLevels = calculateDiscardLevels(fullSize, scale);
-		int threads = Integer.parseInt(System.getProperty("phaedra2.imaging.openjpeg.decode.threads", "1"));
-		logger.info("Threads used for OpenJPEG decoding: {}", threads);
-		int[] regionPoints = null;
-		if (region != null) {
-			regionPoints = new int[] { region.x, region.y, region.x + region.width, region.y + region.height };
-		}
-		JavaByteSource byteSource = asByteSource(source);
-		ImagePixels img = decoder.decode(byteSource, discardLevels, regionPoints, threads);
-        byteSource.close();
-		ImageData data = createImageData(img.width, img.height, img.depth);
-		data.pixels = img.pixels;
-		
-		// If the requested scale was not an exact pow2 scale, perform additional scaling.
-		int[] expectedSize = { (int) Math.ceil(fullSize[0] * scale), (int) Math.ceil(fullSize[1] * scale) };
-		if (region != null) {
-			expectedSize[0] = (int) Math.ceil(region.width * scale);
-			expectedSize[1] = (int) Math.ceil(region.height * scale);
-		}
-		if (expectedSize[0] != img.width || expectedSize[1] != img.height) {
-			data = ImageDataUtils.scale(data, expectedSize[0], expectedSize[1]);	
-		}
+        JavaByteSource byteSource = asByteSource(source);
+        try {
+            int discardLevels = calculateDiscardLevels(fullSize, scale);
+            int threads = Integer.parseInt(System.getProperty("phaedra2.imaging.openjpeg.decode.threads", "1"));
+            logger.info("Threads used for OpenJPEG decoding: {}", threads);
+            int[] regionPoints = null;
+            if (region != null) {
+                regionPoints = new int[] { region.x, region.y, region.x + region.width, region.y + region.height };
+            }
+            ImagePixels img = decoder.decode(byteSource, discardLevels, regionPoints, threads);
+            ImageData data = createImageData(img.width, img.height, img.depth);
+            data.pixels = img.pixels;
 
-		return data;
+            // If the requested scale was not an exact pow2 scale, perform additional scaling.
+            int[] expectedSize = { (int) Math.ceil(fullSize[0] * scale), (int) Math.ceil(fullSize[1] * scale) };
+            if (region != null) {
+                expectedSize[0] = (int) Math.ceil(region.width * scale);
+                expectedSize[1] = (int) Math.ceil(region.height * scale);
+            }
+            if (expectedSize[0] != img.width || expectedSize[1] != img.height) {
+                data = ImageDataUtils.scale(data, expectedSize[0], expectedSize[1]);
+            }
+
+            return data;
+        } finally {
+            byteSource.close();
+        }
+
 	}
 
 	private int calculateDiscardLevels(int[] fullSize, float scale) {
