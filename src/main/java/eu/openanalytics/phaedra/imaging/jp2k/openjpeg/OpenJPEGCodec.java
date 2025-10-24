@@ -82,7 +82,9 @@ public class OpenJPEGCodec implements ICodec {
 	public int[] getDimensions(ICodestreamSource source) throws IOException {
 		lock.lock();
 		try {
-			int[] size = decoder.getSize(asByteSource(source));
+            JavaByteSource byteSource = asByteSource(source);
+            int[] size = decoder.getSize(byteSource);;
+            byteSource.close();
 			return Arrays.copyOf(size, 2);
 		} finally {
 			lock.unlock();
@@ -93,7 +95,9 @@ public class OpenJPEGCodec implements ICodec {
 	public int getBitDepth(ICodestreamSource source) throws IOException {
 		lock.lock();
 		try {
-			int[] size = decoder.getSize(asByteSource(source));
+            JavaByteSource byteSource = asByteSource(source);
+			int[] size = decoder.getSize(byteSource);
+            byteSource.close();
 			return size[2];
 		} finally {
 			lock.unlock();
@@ -105,7 +109,9 @@ public class OpenJPEGCodec implements ICodec {
 		lock.lock();
 		try {
 			// Decode while maintaining aspect ratio.
-			int[] fullSize = decoder.getSize(asByteSource(source));
+            JavaByteSource byteSource = asByteSource(source);
+			int[] fullSize = decoder.getSize(byteSource);
+            byteSource.close();
 			float scale = Math.min(((float) w) / fullSize[0], ((float) h) / fullSize[1]);
 			ImageData decodedImage = decode(source, fullSize, scale, null);
 			
@@ -125,7 +131,9 @@ public class OpenJPEGCodec implements ICodec {
 	public ImageData renderImage(float scale, ICodestreamSource source) throws IOException {
 		lock.lock();
 		try {
-			int[] fullSize = decoder.getSize(asByteSource(source));
+            JavaByteSource byteSource = asByteSource(source);
+			int[] fullSize = decoder.getSize(byteSource);
+            byteSource.close();
 			return decode(source, fullSize, scale, null);
 		} finally {
 			lock.unlock();
@@ -136,7 +144,9 @@ public class OpenJPEGCodec implements ICodec {
 	public ImageData renderImageRegion(float scale, Rectangle region, ICodestreamSource source) throws IOException {
 		lock.lock();
 		try {
-			int[] fullSize = decoder.getSize(asByteSource(source));
+            JavaByteSource byteSource = asByteSource(source);
+			int[] fullSize = decoder.getSize(byteSource);
+            byteSource.close();
 			// If the region falls outside the image, render only the part within the image.
 			Rectangle clippedRegion = region.intersect(Rectangle.of(0, 0, fullSize[0], fullSize[1]));
 			if (clippedRegion.width == 0 || clippedRegion.height == 0) throw new RuntimeException("Cannot render image region: " + clippedRegion); 
@@ -175,8 +185,9 @@ public class OpenJPEGCodec implements ICodec {
 		if (region != null) {
 			regionPoints = new int[] { region.x, region.y, region.x + region.width, region.y + region.height };
 		}
-		
-		ImagePixels img = decoder.decode(asByteSource(source), discardLevels, regionPoints, threads);
+		JavaByteSource byteSource = asByteSource(source);
+		ImagePixels img = decoder.decode(byteSource, discardLevels, regionPoints, threads);
+        byteSource.close();
 		ImageData data = createImageData(img.width, img.height, img.depth);
 		data.pixels = img.pixels;
 		
@@ -214,6 +225,7 @@ public class OpenJPEGCodec implements ICodec {
 	}
 	
 	private JavaByteSource asByteSource(ICodestreamSource source) {
+        System.out.println("asByteSource called");
 		return new GenericByteSource() {
 			@Override
 			protected long doGetSize() {
