@@ -39,7 +39,7 @@ public class ChannelBlender {
 	 * @param cfg The image render config, containing channel render config for each channel.
 	 * @return A blended RGB image.
 	 */
-	public ImageData blend(ImageData[] channels, ImageRenderConfig cfg) {
+	/*public ImageData blend(ImageData[] channels, ImageRenderConfig cfg) {
 
 		Assert.notEmpty(channels, "At least one channel must be provided for blending");
 		
@@ -53,9 +53,9 @@ public class ChannelBlender {
 		}
 		
 		return output;
-	}
+	}*/
 
-	/*public ImageData blend(List<Future<ImageData>> datafutures, ImageRenderConfig cfg) throws IOException {
+	public ImageData blend(List<Future<ImageData>> datafutures, ImageRenderConfig cfg) throws IOException {
 
 		Assert.notEmpty(datafutures, "At least one channel must be provided for blending");
 
@@ -78,7 +78,7 @@ public class ChannelBlender {
 		}
 
 		return output;
-	}*/
+	}
 	
 	private void blendRaw(ImageData source, ImageData target, ChannelRenderConfig config) {
 
