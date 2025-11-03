@@ -91,7 +91,7 @@ public class ImageRenderService {
 		}
 
 		// Collect all rendered channels.
-		/*ImageData[] datas = new ImageData[dataFutures.size()];
+		ImageData[] datas = new ImageData[dataFutures.size()];
 		for (int i = 0; i < datas.length; i++) {
 			try {
 				datas[i] = dataFutures.get(i).get();
@@ -104,13 +104,13 @@ public class ImageRenderService {
 		for (ImageData data : datas) {
 			size += data.getSizeInBytes();
 		}
-		logger.info("datas size: {}", size);*/
+		logger.info("datas size: {}", size);
 		long durationMsDecode = System.currentTimeMillis() - startTime;
 		startTime = System.currentTimeMillis();
 
 		// Blend channels into a single result image.
-		ImageData resultImage = new ChannelBlender().blend(dataFutures, cfg);
-		//logger.info("resultImage size: {}", resultImage.getSizeInBytes());
+		ImageData resultImage = new ChannelBlender().blend(datas, cfg);
+		logger.info("resultImage size: {}", resultImage.getSizeInBytes());
 		ImageDataUtils.applyGamma(resultImage, cfg.gamma);
 
 		long durationMsBlend = System.currentTimeMillis() - startTime;
