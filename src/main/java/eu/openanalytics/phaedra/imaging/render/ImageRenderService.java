@@ -100,11 +100,17 @@ public class ImageRenderService {
 			}
 		}
 
+		int size = 0;
+		for (ImageData data : datas) {
+			size += data.getSizeInBytes();
+		}
+		logger.info("datas size: {}", size);
 		long durationMsDecode = System.currentTimeMillis() - startTime;
 		startTime = System.currentTimeMillis();
 
 		// Blend channels into a single result image.
 		ImageData resultImage = new ChannelBlender().blend(datas, cfg);
+		logger.info("resultImage size: {}", resultImage.getSizeInBytes());
 		ImageDataUtils.applyGamma(resultImage, cfg.gamma);
 
 		long durationMsBlend = System.currentTimeMillis() - startTime;
@@ -113,6 +119,7 @@ public class ImageRenderService {
 		// Convert the result image to the desired image format.
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ImageDataLoader.write(resultImage, cfg.format, bos);
+
 
 		long durationMsFormat = System.currentTimeMillis() - startTime;
 
