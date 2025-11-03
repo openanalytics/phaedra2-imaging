@@ -26,10 +26,6 @@ import eu.openanalytics.phaedra.imaging.ImageData;
 import eu.openanalytics.phaedra.imaging.render.ImageRenderConfig.ChannelRenderConfig;
 import eu.openanalytics.phaedra.imaging.util.ImageDataUtils;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.Future;
-
 public class ChannelBlender {
 
 	/**
@@ -54,31 +50,6 @@ public class ChannelBlender {
 		
 		return output;
 	}
-
-	/*public ImageData blend(List<Future<ImageData>> datafutures, ImageRenderConfig cfg) throws IOException {
-
-		Assert.notEmpty(datafutures, "At least one channel must be provided for blending");
-
-		// Start with an opaque, black RGB image.
-		ImageData output = ImageDataUtils.initNew(0,0,0);
-
-		for (int i=0; i < datafutures.size(); i++) {
-			try {
-
-				ImageData data = datafutures.get(i).get();
-				if (i==0) {
-					output = ImageDataUtils.initNew(data.width, data.height, 24);
-				}
-				if (data.depth == 1) blendOverlay(data, output, cfg.channelConfigs[i]);
-				else if (data.depth <= 16) blendRaw(data, output, cfg.channelConfigs[i]);
-				else throw new IllegalArgumentException("Unsupported channel depth: " + data.depth + ", unable to blend channel " + cfg.channelConfigs[i].name);
-			} catch (Exception e) {
-				throw new IOException("Error rendering image", e);
-			}
-		}
-
-		return output;
-	}*/
 	
 	private void blendRaw(ImageData source, ImageData target, ChannelRenderConfig config) {
 

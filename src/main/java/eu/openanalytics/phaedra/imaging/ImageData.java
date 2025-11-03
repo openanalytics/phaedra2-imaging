@@ -43,8 +43,4 @@ public class ImageData {
 	
 	public int[] pixels;
 
-	public int getSizeInBytes() {
-		return pixels.length * Integer.BYTES;
-	}
-
 }
